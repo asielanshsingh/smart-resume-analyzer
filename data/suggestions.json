@@ -1,0 +1,46 @@
+{
+  "suggestions_catalog": [
+    {
+      "id": "missing_required_skills",
+      "category": "Skills",
+      "severity": "High",
+      "title": "Add Critical Required Skills",
+      "description": "Your resume is missing core skills required for this role. Consider highlighting experience with these technologies."
+    },
+    {
+      "id": "missing_education_section",
+      "category": "Structure",
+      "severity": "High",
+      "title": "Add Education Section",
+      "description": "No explicit Education section was detected. ATS parsers look for standard section headings."
+    },
+    {
+      "id": "missing_experience_section",
+      "category": "Structure",
+      "severity": "High",
+      "title": "Add Work Experience Section",
+      "description": "Work experience is the most heavily weighted section. Include clear job titles, dates, and bullet points."
+    },
+    {
+      "id": "resume_too_short",
+      "category": "Length",
+      "severity": "Medium",
+      "title": "Expand Resume Content",
+      "description": "Your resume word count is below the recommended threshold (400 words). Add details about your projects and achievements."
+    },
+    {
+      "id": "resume_too_long",
+      "category": "Length",
+      "severity": "Low",
+      "title": "Concise Formatting Recommended",
+      "description": "Your resume exceeds 1,000 words. Condense bullet points to maintain recruiter engagement."
+    },
+    {
+      "id": "quantifiable_impact",
+      "category": "Content",
+      "severity": "Medium",
+      "title": "Include Quantifiable Metrics",
+      "description": "Enhance bullet points with metrics (e.g., 'Increased performance by 35%') to demonstrate concrete business impact."
+    }
+  ]
+}

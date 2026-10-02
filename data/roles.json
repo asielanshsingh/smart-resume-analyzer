@@ -1,0 +1,40 @@
+{
+  "roles": [
+    {
+      "id": "software_engineer",
+      "title": "Software Engineer",
+      "category": "Engineering",
+      "required_skills": ["python", "javascript", "sql", "git", "rest api", "data structures", "algorithms"],
+      "preferred_skills": ["docker", "flask", "react", "ci/cd", "aws", "pytest"],
+      "aliases": ["backend engineer", "full stack engineer", "software developer"],
+      "expected_sections": ["experience", "education", "skills", "projects"]
+    },
+    {
+      "id": "data_scientist",
+      "title": "Data Scientist",
+      "category": "Data & Analytics",
+      "required_skills": ["python", "sql", "pandas", "numpy", "scikit-learn", "statistics", "data visualization"],
+      "preferred_skills": ["r", "tensorflow", "pytorch", "tableau", "spark", "bigquery"],
+      "aliases": ["data analyst", "machine learning engineer", "ai specialist"],
+      "expected_sections": ["experience", "education", "skills", "projects", "certifications"]
+    },
+    {
+      "id": "devops_engineer",
+      "title": "DevOps Engineer",
+      "category": "Infrastructure",
+      "required_skills": ["linux", "docker", "kubernetes", "ci/cd", "git", "bash", "python"],
+      "preferred_skills": ["terraform", "ansible", "aws", "prometheus", "grafana", "yaml"],
+      "aliases": ["site reliability engineer", "cloud engineer", "infrastructure engineer"],
+      "expected_sections": ["experience", "education", "skills", "certifications"]
+    },
+    {
+      "id": "product_manager",
+      "title": "Product Manager",
+      "category": "Management",
+      "required_skills": ["product strategy", "agile", "user stories", "roadmap", "analytics", "stakeholder management"],
+      "preferred_skills": ["jira", "sql", "wireframing", "a/b testing", "scrum", "market research"],
+      "aliases": ["technical product manager", "associate product manager", "product owner"],
+      "expected_sections": ["experience", "education", "skills", "achievements"]
+    }
+  ]
+}

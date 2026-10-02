@@ -1,0 +1,19 @@
+{
+  "weights": {
+    "required_skills": 0.45,
+    "preferred_skills": 0.20,
+    "section_presence": 0.20,
+    "formatting_length": 0.15
+  },
+  "length_thresholds": {
+    "min_words": 200,
+    "optimal_min": 400,
+    "optimal_max": 1000,
+    "max_words": 2000
+  },
+  "ats_weights": {
+    "exact_keyword_match": 0.60,
+    "semantic_alias_match": 0.25,
+    "section_structure": 0.15
+  }
+}
