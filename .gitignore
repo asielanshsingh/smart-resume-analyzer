@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Database
+*.db
+*.sqlite3
+instance/
+
+# Configuration & Secrets
+.env
+
+# Testing & Coverage
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Logs & OS
+*.log
+.DS_Store
+
+# Uploads
+uploads/
+
