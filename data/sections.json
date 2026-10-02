@@ -1,0 +1,68 @@
+{
+  "synonyms": {
+    "contact": [
+      "contact",
+      "contact information",
+      "personal details",
+      "contact info",
+      "personal info"
+    ],
+    "summary": [
+      "summary",
+      "professional summary",
+      "executive summary",
+      "profile",
+      "about me",
+      "personal statement",
+      "career objective",
+      "objective"
+    ],
+    "experience": [
+      "experience",
+      "work experience",
+      "professional experience",
+      "employment history",
+      "work history",
+      "career history",
+      "projects and experience",
+      "practical experience"
+    ],
+    "education": [
+      "education",
+      "academic background",
+      "academic qualifications",
+      "educational qualifications",
+      "education and training",
+      "scholastic background"
+    ],
+    "skills": [
+      "skills",
+      "technical skills",
+      "core competencies",
+      "key skills",
+      "technologies",
+      "technical expertise",
+      "skills & tools",
+      "technical proficiency",
+      "software skills",
+      "programming languages"
+    ],
+    "projects": [
+      "projects",
+      "key projects",
+      "academic projects",
+      "personal projects",
+      "recent projects",
+      "featured projects"
+    ],
+    "certifications": [
+      "certifications",
+      "certificates",
+      "licenses & certifications",
+      "professional certifications",
+      "licenses",
+      "courses",
+      "certifications and training"
+    ]
+  }
+}

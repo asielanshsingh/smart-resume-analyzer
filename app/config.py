@@ -13,16 +13,23 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # Upload limits (16 MB default)
-    MAX_CONTENT_LENGTH = int(os.environ.get("MAX_CONTENT_LENGTH", 16 * 1024 * 1024))
+    # Upload limits (Default 5MB, configurable)
+    MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", 5))
+    MAX_CONTENT_LENGTH = MAX_UPLOAD_MB * 1024 * 1024
+    MIN_WORD_COUNT = int(os.environ.get("MIN_WORD_COUNT", 30))
+    
+    # Upload folder
+    UPLOAD_FOLDER = BASE_DIR / "uploads"
     
     # Config File Paths
     ROLES_FILE = BASE_DIR / "data" / "roles.json"
     SCORING_CONFIG_FILE = BASE_DIR / "data" / "scoring_config.json"
     SUGGESTIONS_FILE = BASE_DIR / "data" / "suggestions.json"
+    SECTIONS_CONFIG_FILE = BASE_DIR / "data" / "sections.json"
     
     # Allowed File Extensions
     ALLOWED_EXTENSIONS = {"pdf", "docx"}
+
 
 
 class DevelopmentConfig(Config):
