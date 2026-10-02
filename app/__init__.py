@@ -15,9 +15,11 @@ def create_app(config_class=DevelopmentConfig):
     )
     app.logger.info("Initializing Smart Resume Analyzer application...")
 
-    # Ensure instance folder exists
+    # Ensure instance folder and upload folder exist
     import os
     os.makedirs(app.instance_path, exist_ok=True)
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
 
     # Initialize Extensions
     db.init_app(app)
@@ -47,7 +49,18 @@ def create_app(config_class=DevelopmentConfig):
 
 
 def register_error_handlers(app: Flask):
-    """Register custom JSON error handlers for common HTTP status codes."""
+    """Register custom JSON error handlers for common HTTP status codes and custom exceptions."""
+    from app.services.parser import ResumeParsingError
+
+    @app.errorhandler(ResumeParsingError)
+    def handle_resume_parsing_error(error):
+        return jsonify({
+            "error": {
+                "code": error.code,
+                "message": error.message
+            }
+        }), error.status_code
+
 
     @app.errorhandler(400)
     def bad_request_error(error):

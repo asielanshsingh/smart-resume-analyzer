@@ -165,15 +165,42 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Show Loading Overlay
+        // Show Loading Overlay & Disable Submit
         loadingOverlay.classList.remove('hidden');
+        submitBtn.disabled = true;
 
-        // Simulate analysis upload flow or navigate to dashboard placeholder
-        setTimeout(() => {
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                const errCode = result.error?.code || 'UPLOAD_FAILED';
+                const errMessage = result.error?.message || 'Failed to upload and parse resume.';
+                showError(errCode, errMessage);
+                return;
+            }
+
+            // Store resume_id and navigate to dashboard with role and resume_id
+            const resumeId = result.resume_id;
+            sessionStorage.setItem('active_resume_id', resumeId);
+            window.location.href = `/dashboard?role=${encodeURIComponent(roleValue)}&resume_id=${resumeId}`;
+
+        } catch (err) {
+            console.error('Upload error:', err);
+            showError('NETWORK_ERROR', 'Network error or server unreachable. Please check your connection and try again.');
+        } finally {
             loadingOverlay.classList.add('hidden');
-            window.location.href = `/dashboard?role=${encodeURIComponent(roleValue)}&filename=${encodeURIComponent(selectedFile.name)}`;
-        }, 1200);
+            submitBtn.disabled = false;
+        }
     });
+
 
     // Initialize Page
     loadRoles();

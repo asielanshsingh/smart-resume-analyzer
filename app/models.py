@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 class Resume(db.Model):
-    """Resume model storing uploaded file details and extracted text."""
+    """Resume model storing uploaded file details, extracted text, and structured parsed sections."""
     __tablename__ = "resumes"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -12,17 +12,35 @@ class Resume(db.Model):
     upload_time = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     extracted_text = db.Column(db.Text, nullable=True)
     file_hash = db.Column(db.String(64), index=True, nullable=False)
+    page_count = db.Column(db.Integer, default=1, nullable=False)
+    word_count = db.Column(db.Integer, default=0, nullable=False)
+    sections_json = db.Column(db.JSON, nullable=True)
+    contacts_json = db.Column(db.JSON, nullable=True)
+    warnings_json = db.Column(db.JSON, nullable=True)
 
     analyses = db.relationship("Analysis", backref="resume", cascade="all, delete-orphan", lazy=True)
 
-    def to_dict(self):
-        return {
-            "id": self.id,
+    def to_dict(self, include_text: bool = False):
+        data = {
+            "resume_id": self.id,
             "filename": self.filename,
             "upload_time": self.upload_time.isoformat(),
-            "extracted_text_snippet": (self.extracted_text[:100] + "...") if self.extracted_text else "",
-            "file_hash": self.file_hash
+            "file_hash": self.file_hash,
+            "page_count": self.page_count,
+            "word_count": self.word_count,
+            "detected_sections": self.sections_json or {},
+            "contacts": self.contacts_json or {
+                "emails": [],
+                "phones": [],
+                "linkedin": [],
+                "github": []
+            },
+            "warnings": self.warnings_json or []
         }
+        if include_text:
+            data["raw_text"] = self.extracted_text
+        return data
+
 
 
 class Analysis(db.Model):
