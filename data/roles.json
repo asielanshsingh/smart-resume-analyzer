@@ -4,117 +4,348 @@
       "id": "software_engineer",
       "title": "Software Engineer",
       "category": "Engineering",
-      "required_skills": ["python", "javascript", "sql", "git", "rest api", "data structures", "algorithms"],
-      "preferred_skills": ["docker", "flask", "react", "ci/cd", "aws", "pytest"],
+      "required_skills": [
+        "python",
+        "javascript",
+        "sql",
+        "git",
+        "rest api",
+        "data structures",
+        "algorithms"
+      ],
+      "preferred_skills": [
+        "docker",
+        "flask",
+        "react",
+        "ci/cd",
+        "aws",
+        "pytest"
+      ],
       "skill_aliases": {
-        "javascript": ["js"],
-        "ci/cd": ["cicd", "continuous integration"],
-        "pytest": ["python testing"]
+        "javascript": [
+          "js"
+        ],
+        "ci/cd": [
+          "cicd",
+          "continuous integration"
+        ],
+        "pytest": [
+          "python testing"
+        ]
       },
-      "expected_sections": ["experience", "education", "skills", "projects"]
+      "expected_sections": [
+        "experience",
+        "education",
+        "skills",
+        "projects"
+      ]
     },
     {
       "id": "backend_developer",
       "title": "Backend Developer",
       "category": "Engineering",
-      "required_skills": ["python", "sql", "rest api", "postgresql", "node.js", "git", "data structures"],
-      "preferred_skills": ["docker", "redis", "flask", "fastapi", "microservices", "ci/cd"],
+      "required_skills": [
+        "python",
+        "sql",
+        "rest api",
+        "postgresql",
+        "node.js",
+        "git",
+        "data structures"
+      ],
+      "preferred_skills": [
+        "docker",
+        "redis",
+        "flask",
+        "fastapi",
+        "microservices",
+        "ci/cd"
+      ],
       "skill_aliases": {
-        "node.js": ["node", "nodejs"],
-        "postgresql": ["postgres"],
-        "ci/cd": ["cicd"]
+        "node.js": [
+          "node",
+          "nodejs"
+        ],
+        "postgresql": [
+          "postgres"
+        ],
+        "ci/cd": [
+          "cicd"
+        ]
       },
-      "expected_sections": ["experience", "education", "skills", "projects"]
+      "expected_sections": [
+        "experience",
+        "education",
+        "skills",
+        "projects"
+      ]
     },
     {
       "id": "web_developer",
       "title": "Web Developer",
       "category": "Engineering",
-      "required_skills": ["html", "css", "javascript", "react", "git", "rest api"],
-      "preferred_skills": ["typescript", "node.js", "next.js", "tailwind", "responsive design"],
+      "required_skills": [
+        "html",
+        "css",
+        "javascript",
+        "react",
+        "git",
+        "rest api"
+      ],
+      "preferred_skills": [
+        "typescript",
+        "node.js",
+        "next.js",
+        "tailwind",
+        "responsive design"
+      ],
       "skill_aliases": {
-        "javascript": ["js"],
-        "typescript": ["ts"],
-        "node.js": ["node", "nodejs"]
+        "javascript": [
+          "js"
+        ],
+        "typescript": [
+          "ts"
+        ],
+        "node.js": [
+          "node",
+          "nodejs"
+        ]
       },
-      "expected_sections": ["experience", "education", "skills", "projects"]
+      "expected_sections": [
+        "experience",
+        "education",
+        "skills",
+        "projects"
+      ]
     },
     {
       "id": "data_scientist",
       "title": "Data Scientist",
       "category": "Data & Analytics",
-      "required_skills": ["python", "sql", "pandas", "numpy", "scikit-learn", "statistics", "machine learning"],
-      "preferred_skills": ["r", "tensorflow", "pytorch", "tableau", "spark", "bigquery"],
+      "required_skills": [
+        "python",
+        "sql",
+        "pandas",
+        "numpy",
+        "scikit-learn",
+        "statistics",
+        "machine learning"
+      ],
+      "preferred_skills": [
+        "r",
+        "tensorflow",
+        "pytorch",
+        "tableau",
+        "spark",
+        "bigquery"
+      ],
       "skill_aliases": {
-        "scikit-learn": ["sklearn"],
-        "machine learning": ["ml"],
-        "r": ["r language"]
+        "scikit-learn": [
+          "sklearn"
+        ],
+        "machine learning": [
+          "ml"
+        ],
+        "r": [
+          "r language"
+        ]
       },
-      "expected_sections": ["experience", "education", "skills", "projects", "certifications"]
+      "expected_sections": [
+        "experience",
+        "education",
+        "skills",
+        "projects",
+        "certifications"
+      ]
     },
     {
       "id": "data_analyst",
       "title": "Data Analyst",
       "category": "Data & Analytics",
-      "required_skills": ["sql", "python", "excel", "tableau", "data visualization", "statistics"],
-      "preferred_skills": ["power bi", "pandas", "r", "bigquery", "a/b testing"],
+      "required_skills": [
+        "sql",
+        "python",
+        "excel",
+        "tableau",
+        "data visualization",
+        "statistics"
+      ],
+      "preferred_skills": [
+        "power bi",
+        "pandas",
+        "r",
+        "bigquery",
+        "a/b testing"
+      ],
       "skill_aliases": {
-        "r": ["r language"],
-        "data visualization": ["dataviz"]
+        "r": [
+          "r language"
+        ],
+        "data visualization": [
+          "dataviz"
+        ]
       },
-      "expected_sections": ["experience", "education", "skills", "projects"]
+      "expected_sections": [
+        "experience",
+        "education",
+        "skills",
+        "projects"
+      ]
     },
     {
       "id": "ai_engineer",
       "title": "AI Engineer",
       "category": "Artificial Intelligence",
-      "required_skills": ["python", "machine learning", "deep learning", "pytorch", "tensorflow", "nlp"],
-      "preferred_skills": ["llm", "rag", "langchain", "c++", "opencv", "docker"],
+      "required_skills": [
+        "python",
+        "machine learning",
+        "deep learning",
+        "pytorch",
+        "tensorflow",
+        "nlp"
+      ],
+      "preferred_skills": [
+        "llm",
+        "rag",
+        "langchain",
+        "c++",
+        "opencv",
+        "docker"
+      ],
       "skill_aliases": {
-        "machine learning": ["ml"],
-        "deep learning": ["dl"],
-        "nlp": ["natural language processing"],
-        "c++": ["cpp"]
+        "machine learning": [
+          "ml"
+        ],
+        "deep learning": [
+          "dl"
+        ],
+        "nlp": [
+          "natural language processing"
+        ],
+        "c++": [
+          "cpp"
+        ]
       },
-      "expected_sections": ["experience", "education", "skills", "projects"]
+      "expected_sections": [
+        "experience",
+        "education",
+        "skills",
+        "projects"
+      ]
     },
     {
       "id": "devops_engineer",
       "title": "DevOps Engineer",
       "category": "Infrastructure",
-      "required_skills": ["linux", "docker", "kubernetes", "ci/cd", "git", "bash", "python"],
-      "preferred_skills": ["terraform", "ansible", "aws", "prometheus", "grafana", "yaml"],
+      "required_skills": [
+        "linux",
+        "docker",
+        "kubernetes",
+        "ci/cd",
+        "git",
+        "bash",
+        "python"
+      ],
+      "preferred_skills": [
+        "terraform",
+        "ansible",
+        "aws",
+        "prometheus",
+        "grafana",
+        "yaml"
+      ],
       "skill_aliases": {
-        "kubernetes": ["k8s"],
-        "ci/cd": ["cicd", "continuous integration"]
+        "kubernetes": [
+          "k8s"
+        ],
+        "ci/cd": [
+          "cicd",
+          "continuous integration"
+        ]
       },
-      "expected_sections": ["experience", "education", "skills", "certifications"]
+      "expected_sections": [
+        "experience",
+        "education",
+        "skills",
+        "certifications"
+      ]
     },
     {
       "id": "cloud_engineer",
       "title": "Cloud Engineer",
       "category": "Infrastructure",
-      "required_skills": ["aws", "azure", "gcp", "linux", "terraform", "python", "networking"],
-      "preferred_skills": ["kubernetes", "docker", "ci/cd", "ansible", "cloudsecurity"],
+      "required_skills": [
+        "aws",
+        "azure",
+        "gcp",
+        "linux",
+        "terraform",
+        "python",
+        "networking"
+      ],
+      "preferred_skills": [
+        "kubernetes",
+        "docker",
+        "ci/cd",
+        "ansible",
+        "cloudsecurity"
+      ],
       "skill_aliases": {
-        "aws": ["amazon web services"],
-        "gcp": ["google cloud", "google cloud platform"],
-        "kubernetes": ["k8s"],
-        "ci/cd": ["cicd"]
+        "aws": [
+          "amazon web services"
+        ],
+        "gcp": [
+          "google cloud",
+          "google cloud platform"
+        ],
+        "kubernetes": [
+          "k8s"
+        ],
+        "ci/cd": [
+          "cicd"
+        ]
       },
-      "expected_sections": ["experience", "education", "skills", "certifications"]
+      "expected_sections": [
+        "experience",
+        "education",
+        "skills",
+        "certifications"
+      ]
     },
     {
       "id": "ui_ux_designer",
       "title": "UI/UX Designer",
       "category": "Design",
-      "required_skills": ["figma", "wireframing", "prototyping", "user research", "ui design", "ux design"],
-      "preferred_skills": ["sketch", "adobe xd", "css", "design systems", "usability testing"],
+      "required_skills": [
+        "figma",
+        "wireframing",
+        "prototyping",
+        "user research",
+        "ui design",
+        "ux design"
+      ],
+      "preferred_skills": [
+        "sketch",
+        "adobe xd",
+        "css",
+        "design systems",
+        "usability testing"
+      ],
       "skill_aliases": {
-        "ui design": ["user interface design"],
-        "ux design": ["user experience design"]
+        "ui design": [
+          "user interface design"
+        ],
+        "ux design": [
+          "user experience design"
+        ]
       },
-      "expected_sections": ["experience", "education", "skills", "projects", "portfolio"]
+      "expected_sections": [
+        "experience",
+        "education",
+        "skills",
+        "projects",
+        "portfolio"
+      ]
     }
   ]
 }
