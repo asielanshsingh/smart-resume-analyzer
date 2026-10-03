@@ -6,6 +6,8 @@ from app.models import db, Resume
 from app.services.ats import (
     get_spacy_nlp,
     build_skill_regex,
+    is_short_or_symbol_skill,
+    lemmatize_text,
     match_skills_in_text,
     analyze_ats_compatibility
 )
@@ -255,3 +257,94 @@ def test_dynamic_role_addition_at_runtime(client, app, tmp_path):
         roles_data["roles"] = original_roles
         with open(roles_file, "w", encoding="utf-8") as f:
             json.dump(roles_data, f, indent=2)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests: plural tolerance & lemma matching (items 1-4 of spec)
+# ---------------------------------------------------------------------------
+
+def test_short_token_no_false_plurals():
+    """Short tokens (<4 alnum, no spaces) must use exact boundaries only.
+
+    'Goes' must not match 'Go', 'Rs' must not match 'R',
+    'Cs' must not match 'C', 'Course' must not match 'C'.
+    """
+    # Guard: confirm is_short_or_symbol_skill correctly classifies them
+    assert is_short_or_symbol_skill("Go") is True, "'Go' should be a short token"
+    assert is_short_or_symbol_skill("R") is True, "'R' should be a short token"
+    assert is_short_or_symbol_skill("C") is True, "'C' should be a short token"
+
+    go_regex = build_skill_regex("Go")
+    r_regex = build_skill_regex("R")
+    c_regex = build_skill_regex("C")
+
+    # False-plural rejections
+    assert go_regex.search("Goes to the office") is None, \
+        "'Goes' must not match skill 'Go'"
+    assert go_regex.search("I go to the office") is not None, \
+        "'go' (standalone) should match skill 'Go'"
+
+    assert r_regex.search("Rs are statistical values") is None, \
+        "'Rs' must not match skill 'R'"
+    assert r_regex.search("Statistics with R and Python") is not None, \
+        "'R' (standalone) should match skill 'R'"
+
+    # 'C' must not match 'Course' or 'Cs'
+    assert c_regex.search("Enrolled in Course 101") is None, \
+        "'Course' must not match skill 'C'"
+    assert c_regex.search("Grades: Cs and Bs") is None, \
+        "'Cs' must not match skill 'C'"
+    assert c_regex.search("Languages: C, Python") is not None, \
+        "'C' (standalone) should match skill 'C'"
+
+
+def test_symbol_skill_exact_match_regression():
+    """Symbol skills (C++, C#, .NET) must still match correctly after regex changes."""
+    cpp_regex = build_skill_regex("C++")
+    assert is_short_or_symbol_skill("C++") is True, "'C++' should be a symbol skill"
+    assert cpp_regex.search("Proficient in C++ and Python") is not None, \
+        "'C++' should match text containing 'C++'"
+    assert cpp_regex.search("C++ Developer role") is not None, \
+        "'C++' should match at start of phrase"
+    # Sanity: does not bleed into neighbouring alphanumerics
+    assert cpp_regex.search("xC++y") is None, \
+        "'C++' must not match when embedded in alphanumeric characters"
+
+
+def test_plural_suffix_positive_matching():
+    """Skills with ≥4 chars or multiple words must match their plural forms.
+
+    - 'microservices' matches skill 'microservice'
+    - 'built REST APIs' matches skill 'REST API'
+    - 'created data visualizations' matches skill 'data visualization'
+    """
+    # microservice / microservices
+    micro_regex = build_skill_regex("microservice")
+    assert is_short_or_symbol_skill("microservice") is False, \
+        "'microservice' should NOT be classified as short/symbol"
+    assert micro_regex.search("built microservices architecture") is not None, \
+        "'microservices' should match skill 'microservice'"
+    assert micro_regex.search("designed a microservice") is not None, \
+        "singular 'microservice' should also match"
+
+    # REST API / REST APIs  (multi-word, both tokens ≥4 alnum chars)
+    api_matched, _, _ = match_skills_in_text(
+        "REST API", [], "built REST APIs for e-commerce platform"
+    )
+    assert api_matched is True, \
+        "'built REST APIs' should match skill 'REST API'"
+
+    # data visualization / data visualizations  (multi-word)
+    viz_matched, _, _ = match_skills_in_text(
+        "data visualization", [], "created data visualizations for stakeholders"
+    )
+    assert viz_matched is True, \
+        "'created data visualizations' should match skill 'data visualization'"
+
+    # Negative: plain 'visualization' alone must NOT match 'data visualization'
+    plain_viz_matched, _, _ = match_skills_in_text(
+        "data visualization", [], "I do visualization work"
+    )
+    assert plain_viz_matched is False, \
+        "standalone 'visualization' must not match skill 'data visualization'"
+
