@@ -1,19 +1,61 @@
 {
-  "weights": {
-    "required_skills": 0.45,
-    "preferred_skills": 0.20,
-    "section_presence": 0.20,
-    "formatting_length": 0.15
+  "category_weights": {
+    "structure": 20,
+    "skills": 20,
+    "education": 15,
+    "projects": 15,
+    "experience": 10,
+    "contact": 10,
+    "completeness": 10
   },
-  "length_thresholds": {
-    "min_words": 200,
-    "optimal_min": 400,
-    "optimal_max": 1000,
-    "max_words": 2000
+  "fresher_substitution": {
+    "enabled": true,
+    "min_experience_words": 15,
+    "substitute_from_projects_max": 6,
+    "substitute_from_certifications_max": 4
   },
-  "ats_weights": {
-    "exact_keyword_match": 0.60,
-    "semantic_alias_match": 0.25,
-    "section_structure": 0.15
-  }
+  "structure_rules": {
+    "essential_sections": ["contact", "education", "skills"],
+    "recommended_sections": ["experience", "projects", "summary", "certifications"],
+    "logical_order": ["contact", "summary", "experience", "education", "skills", "projects", "certifications"]
+  },
+  "skills_rules": {
+    "min_skills_for_max_score": 10,
+    "categorized_bonus_points": 4
+  },
+  "education_rules": {
+    "degree_keywords": ["bachelor", "master", "phd", "b.tech", "b.e.", "b.s.", "m.s.", "m.tech", "bca", "mca", "degree", "diploma", "associate", "b.sc", "m.sc"],
+    "institution_keywords": ["university", "college", "institute", "school", "academy"],
+    "gpa_keywords": ["cgpa", "gpa", "score", "grade", "percentage", "%", "honors", "first class"]
+  },
+  "project_rules": {
+    "min_projects_for_max": 2,
+    "action_verb_bonus_points": 3,
+    "link_bonus_points": 2
+  },
+  "experience_rules": {
+    "quantified_metrics_bonus_points": 4,
+    "metric_regex": "\\b(?:\\d+(?:\\.\\d+)?%|\\$\\d+(?:\\.\\d+)?[kM]?|\\d+[kM]?\\+|\\b\\d+\\s*(?:users|clients|requests|projects|percent|ms|sec|hours|days|x))\\b"
+  },
+  "contact_rules": {
+    "email_points": 3,
+    "phone_points": 3,
+    "linkedin_points": 2,
+    "github_points": 2
+  },
+  "completeness_rules": {
+    "optimal_min_words": 300,
+    "optimal_max_words": 900,
+    "too_short_words": 150,
+    "too_long_words": 1500,
+    "bullet_ratio_min": 0.1,
+    "first_person_pronouns": ["i", "me", "my", "myself", "we", "us", "our"]
+  },
+  "action_verbs": [
+    "developed", "built", "created", "designed", "implemented", "engineered",
+    "architected", "optimized", "reduced", "increased", "improved", "launched",
+    "managed", "led", "automated", "refactored", "deployed", "spearheaded",
+    "integrated", "solved", "analyzed", "transformed", "established", "accelerated",
+    "scaled", "crafted", "devised", "constructed", "pioneered", "overhauled"
+  ]
 }
