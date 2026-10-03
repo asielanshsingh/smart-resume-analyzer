@@ -131,8 +131,8 @@ def upload_resume():
 @api_bp.route("/api/resumes/<int:resume_id>", methods=["GET"])
 def get_resume(resume_id: int):
     """Retrieves parsed resume details by ID."""
-    from app.models import Resume
-    resume = Resume.query.get(resume_id)
+    from app.models import db, Resume
+    resume = db.session.get(Resume, resume_id)
     if not resume:
         return jsonify({
             "error": {
@@ -141,4 +141,42 @@ def get_resume(resume_id: int):
             }
         }), 404
     return jsonify(resume.to_dict(include_text=True)), 200
+
+
+@api_bp.route("/api/score", methods=["POST"])
+def score_resume():
+    """Calculates deterministic resume score (out of 100) and category breakdown."""
+    from app.models import db, Resume
+    from app.services.scoring import analyze_resume_score
+
+    payload = request.get_json(silent=True) or {}
+    resume_id = payload.get("resume_id")
+
+    if not resume_id:
+        return jsonify({
+            "error": {
+                "code": "BAD_REQUEST",
+                "message": "Missing 'resume_id' parameter in request body."
+            }
+        }), 400
+
+    resume = db.session.get(Resume, resume_id)
+    if not resume:
+        return jsonify({
+            "error": {
+                "code": "NOT_FOUND",
+                "message": f"Resume with ID {resume_id} not found."
+            }
+        }), 404
+
+
+    parsed_data = resume.to_dict(include_text=True)
+    scoring_result = analyze_resume_score(parsed_data, current_app.config["SCORING_CONFIG_FILE"])
+
+    return jsonify({
+        "resume_id": resume.id,
+        "filename": resume.filename,
+        "score_result": scoring_result
+    }), 200
+
 
