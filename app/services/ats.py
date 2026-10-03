@@ -14,25 +14,52 @@ def get_spacy_nlp():
     return _nlp
 
 
+def is_short_or_symbol_skill(skill: str) -> bool:
+    """
+    Returns True if skill contains special symbols (+, #, ., /, -, etc.) or has
+    fewer than 4 alphanumeric characters (e.g. R, C, Go, AI, C++, C#, .NET, Node.js, CI/CD).
+    """
+    stripped = skill.strip()
+    if any(char in stripped for char in "+#./-"):
+        return True
+    alnum = [c for c in stripped if c.isalnum()]
+    return len(alnum) < 4 and " " not in stripped
+
+
 def build_skill_regex(skill: str) -> re.Pattern:
     """
-    Builds a word-boundary safe regex for skill strings, including terms with
-    special characters like C++, C#, .NET, Node.js, and CI/CD.
-    Uses custom lookarounds (?<![A-Za-z0-9]) and (?![A-Za-z0-9]) around escaped skill.
+    Builds a word-boundary safe regex for skill strings.
+    Short tokens (<4 chars) and symbol skills (C++, C#, .NET, Node.js, CI/CD) use exact boundaries.
+    Skills with 4+ chars or multi-word phrases add optional plural suffix (?:s|es)?.
     """
     escaped = re.escape(skill.strip())
-    pattern = r"(?<![A-Za-z0-9])" + escaped + r"(?![A-Za-z0-9])"
+    if is_short_or_symbol_skill(skill):
+        pattern = r"(?<![A-Za-z0-9])" + escaped + r"(?![A-Za-z0-9])"
+    else:
+        pattern = r"(?<![A-Za-z0-9])" + escaped + r"(?:s|es)?(?![A-Za-z0-9])"
     return re.compile(pattern, re.IGNORECASE)
+
+
+def lemmatize_text(text: str) -> str:
+    """Lemmatizes input text using spaCy lazy singleton."""
+    if not text or not text.strip():
+        return ""
+    nlp = get_spacy_nlp()
+    doc = nlp(text)
+    return " ".join([token.lemma_.lower() for token in doc])
 
 
 def match_skills_in_text(
     skill: str,
     aliases: List[str],
     raw_text: str,
-    sections_json: Optional[Dict[str, str]] = None
+    sections_json: Optional[Dict[str, str]] = None,
+    lemmatized_raw_text: Optional[str] = None,
+    lemmatized_sections: Optional[Dict[str, str]] = None
 ) -> Tuple[bool, Optional[str], List[str]]:
     """
     Checks if canonical skill or any of its aliases match in raw_text or sections.
+    Uses regex plural tolerance and optional spaCy lemmatized text comparison.
     Returns (is_matched, matched_by_term, list_of_sections_found).
     """
     terms_to_check = [skill] + [a for a in aliases if a.strip().lower() != skill.strip().lower()]
@@ -42,21 +69,37 @@ def match_skills_in_text(
 
     for term in terms_to_check:
         regex = build_skill_regex(term)
-        
-        # Check explicit sections first
         term_matched = False
+
+        # 1. Search raw sections
         if sections_json and isinstance(sections_json, dict):
             for sec_name, sec_content in sections_json.items():
                 if sec_content and regex.search(sec_content):
                     sections_found.add(sec_name)
                     term_matched = True
-        
-        # Check overall raw_text
+
+        # 2. Search raw text
         if raw_text and regex.search(raw_text):
             term_matched = True
             if not sections_found:
                 sections_found.add("general_body")
-        
+
+        # 3. Search lemmatized text & sections if not short/symbol
+        if not term_matched and not is_short_or_symbol_skill(term):
+            lemmatized_term = lemmatize_text(term)
+            lemma_regex = build_skill_regex(lemmatized_term) if lemmatized_term else regex
+
+            if lemmatized_sections and isinstance(lemmatized_sections, dict):
+                for sec_name, sec_lemmatized in lemmatized_sections.items():
+                    if sec_lemmatized and lemma_regex.search(sec_lemmatized):
+                        sections_found.add(sec_name)
+                        term_matched = True
+
+            if lemmatized_raw_text and lemma_regex.search(lemmatized_raw_text):
+                term_matched = True
+                if not sections_found:
+                    sections_found.add("general_body")
+
         if term_matched:
             is_matched = True
             if not matched_term:
@@ -85,12 +128,18 @@ def extract_skills_from_jd(
 
     matched_skills: Set[str] = set()
     jd_clean = jd_text.lower()
+    lemmatized_jd = lemmatize_text(jd_text)
 
-    # Search master skills using custom lookaround regexes
+    # Search master skills using custom regexes (raw and lemmatized)
     for skill in master_skills:
         regex = build_skill_regex(skill)
         if regex.search(jd_clean):
             matched_skills.add(skill)
+        elif not is_short_or_symbol_skill(skill) and lemmatized_jd:
+            lemmatized_skill = lemmatize_text(skill)
+            lemma_regex = build_skill_regex(lemmatized_skill) if lemmatized_skill else regex
+            if lemma_regex.search(lemmatized_jd):
+                matched_skills.add(skill)
 
     if not matched_skills:
         return {"required_skills": [], "preferred_skills": [], "skill_aliases": {}}
@@ -234,6 +283,14 @@ def analyze_ats_compatibility(
     raw_text = parsed_resume.get("raw_text") or parsed_resume.get("extracted_text", "")
     sections_json = parsed_resume.get("detected_sections") or parsed_resume.get("sections_json") or {}
 
+    # Pre-lemmatize resume raw text and sections once per analysis for performance
+    lemmatized_raw_text = lemmatize_text(raw_text) if raw_text else ""
+    lemmatized_sections = {
+        sec: lemmatize_text(content)
+        for sec, content in sections_json.items()
+        if content and isinstance(content, str)
+    } if sections_json else {}
+
     # 1. Determine role skill requirements & aliases
     if role_config:
         req_skills = role_config.get("required_skills", [])
@@ -268,7 +325,9 @@ def analyze_ats_compatibility(
     for skill in req_skills:
         aliases = aliases_map.get(skill, [])
         is_matched, matched_by, sec_found = match_skills_in_text(
-            skill, aliases, raw_text, sections_json
+            skill, aliases, raw_text, sections_json,
+            lemmatized_raw_text=lemmatized_raw_text,
+            lemmatized_sections=lemmatized_sections
         )
         if is_matched:
             matched_req_count += 1
@@ -286,7 +345,9 @@ def analyze_ats_compatibility(
     for skill in pref_skills:
         aliases = aliases_map.get(skill, [])
         is_matched, matched_by, sec_found = match_skills_in_text(
-            skill, aliases, raw_text, sections_json
+            skill, aliases, raw_text, sections_json,
+            lemmatized_raw_text=lemmatized_raw_text,
+            lemmatized_sections=lemmatized_sections
         )
         if is_matched:
             matched_pref_count += 1
