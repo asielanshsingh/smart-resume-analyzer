@@ -1,46 +1,261 @@
 {
+  "suggestions_config": {
+    "max_suggestions": 12,
+    "priority_weights": {
+      "high": 3,
+      "medium": 2,
+      "low": 1
+    }
+  },
   "suggestions_catalog": [
     {
-      "id": "missing_required_skills",
+      "id": "add_missing_critical_skills",
       "category": "Skills",
-      "severity": "High",
-      "title": "Add Critical Required Skills",
-      "description": "Your resume is missing core skills required for this role. Consider highlighting experience with these technologies."
+      "priority": "high",
+      "condition": {
+        "type": "missing_skills_non_empty",
+        "field": "missing_critical_skills"
+      },
+      "message": "Your resume is missing critical skills required for this role. Recruiters and ATS systems filter for these specifically.",
+      "how_to_fix": "Add each missing critical skill to your Skills section and demonstrate it in at least one project or experience bullet.",
+      "example": "Skills: Python, SQL, REST API, Git. Projects: Built a REST API with Python and Flask, backed by a PostgreSQL database."
     },
     {
-      "id": "missing_education_section",
-      "category": "Structure",
-      "severity": "High",
-      "title": "Add Education Section",
-      "description": "No explicit Education section was detected. ATS parsers look for standard section headings."
+      "id": "add_nice_to_have_skills",
+      "category": "Skills",
+      "priority": "medium",
+      "condition": {
+        "type": "missing_skills_non_empty",
+        "field": "missing_nice_to_have_skills"
+      },
+      "message": "Several preferred skills for this role are absent from your resume. Including them can differentiate you from other candidates.",
+      "how_to_fix": "Add relevant preferred skills you have experience with to your Skills section, even if used briefly in a side project.",
+      "example": "Skills: Docker, AWS, CI/CD. Projects: Deployed a Flask app to AWS EC2 using a GitHub Actions CI/CD pipeline."
     },
     {
-      "id": "missing_experience_section",
+      "id": "add_technical_projects",
       "category": "Structure",
-      "severity": "High",
-      "title": "Add Work Experience Section",
-      "description": "Work experience is the most heavily weighted section. Include clear job titles, dates, and bullet points."
+      "priority": "high",
+      "condition": {
+        "type": "section_missing",
+        "section": "projects"
+      },
+      "message": "No Projects section was detected. For technical roles, projects are a primary signal of hands-on ability, especially for early-career candidates.",
+      "how_to_fix": "Add a Projects section with at least two technical projects. Include the tech stack, your specific contribution, and a link to the code or demo.",
+      "example": "Projects\n• Resume Analyzer | Python, Flask, SQLite | github.com/you/resume-analyzer\n  Built a REST API that parses PDF/DOCX resumes and scores them against job roles."
+    },
+    {
+      "id": "add_certifications",
+      "category": "Structure",
+      "priority": "medium",
+      "condition": {
+        "type": "compound_and",
+        "conditions": [
+          {"type": "section_missing", "section": "certifications"},
+          {"type": "score_below", "field": "resume_score", "threshold": 70}
+        ]
+      },
+      "message": "Adding relevant certifications can boost both your resume score and ATS compatibility, particularly when formal experience is limited.",
+      "how_to_fix": "List certifications in a dedicated Certifications section with the issuing body and year. Prioritize vendor-recognized certs relevant to the target role.",
+      "example": "Certifications\n• AWS Certified Cloud Practitioner — Amazon Web Services, 2024\n• Google Data Analytics Certificate — Coursera, 2023"
+    },
+    {
+      "id": "add_internship_experience",
+      "category": "Structure",
+      "priority": "high",
+      "condition": {
+        "type": "section_missing",
+        "section": "experience"
+      },
+      "message": "No Work Experience or Internship section was detected. This is the most heavily weighted section for most roles.",
+      "how_to_fix": "Add an Experience section listing internships, part-time roles, freelance work, or significant volunteer positions with job title, company, dates, and bullet-point achievements.",
+      "example": "Experience\n• Software Engineering Intern — Acme Corp, Jun 2023–Aug 2023\n  Developed a data pipeline in Python that reduced processing time by 40%."
+    },
+    {
+      "id": "quantify_achievements",
+      "category": "Content",
+      "priority": "high",
+      "condition": {
+        "type": "compound_and",
+        "conditions": [
+          {"type": "section_present", "section": "experience"},
+          {"type": "no_quantified_metrics"}
+        ]
+      },
+      "message": "Your experience bullets lack quantified metrics. Numbers make accomplishments concrete and credible to both recruiters and ATS parsers.",
+      "how_to_fix": "Revise each bullet to include at least one number: percentage improvement, scale, speed, cost saving, or user count.",
+      "example": "Before: Improved the checkout flow. After: Redesigned the checkout flow, reducing cart abandonment by 18% (tracked via Google Analytics)."
+    },
+    {
+      "id": "add_github_link",
+      "category": "Contact",
+      "priority": "medium",
+      "condition": {
+        "type": "no_contact_field",
+        "field": "github"
+      },
+      "message": "No GitHub profile link was found. For technical roles, GitHub is often checked by hiring managers to verify your code quality and activity.",
+      "how_to_fix": "Add your GitHub profile URL to your contact header in the format: github.com/yourusername. Make sure your pinned repositories are relevant to the role.",
+      "example": "John Doe | john@example.com | +1-555-0100 | linkedin.com/in/johndoe | github.com/johndoe"
+    },
+    {
+      "id": "add_linkedin_link",
+      "category": "Contact",
+      "priority": "medium",
+      "condition": {
+        "type": "no_contact_field",
+        "field": "linkedin"
+      },
+      "message": "No LinkedIn profile link was detected. LinkedIn is the primary professional network recruiters use to verify and expand on your resume.",
+      "how_to_fix": "Add your LinkedIn URL to the contact header. Ensure your LinkedIn profile is complete and matches the resume content.",
+      "example": "John Doe | john@example.com | linkedin.com/in/johndoe | github.com/johndoe"
+    },
+    {
+      "id": "missing_email",
+      "category": "Contact",
+      "priority": "high",
+      "condition": {
+        "type": "no_contact_field",
+        "field": "emails"
+      },
+      "message": "No email address was found on your resume. Email is the primary way recruiters reach out and is required by most ATS parsers.",
+      "how_to_fix": "Add a professional email address to the top of your resume. Use a format like firstname.lastname@gmail.com and avoid unprofessional handles.",
+      "example": "Jane Smith | jane.smith@gmail.com | +91-98765-43210"
+    },
+    {
+      "id": "missing_phone",
+      "category": "Contact",
+      "priority": "high",
+      "condition": {
+        "type": "no_contact_field",
+        "field": "phones"
+      },
+      "message": "No phone number was detected. Many recruiters call directly before emailing, and ATS systems score contact completeness.",
+      "how_to_fix": "Add a phone number to the contact section. Include the country code if applying internationally.",
+      "example": "Jane Smith | jane.smith@gmail.com | +1-415-555-0190 | linkedin.com/in/janesmith"
     },
     {
       "id": "resume_too_short",
       "category": "Length",
-      "severity": "Medium",
-      "title": "Expand Resume Content",
-      "description": "Your resume word count is below the recommended threshold (400 words). Add details about your projects and achievements."
+      "priority": "high",
+      "condition": {
+        "type": "word_count_below",
+        "threshold": 150
+      },
+      "message": "Your resume is very short and may not contain enough content for ATS systems to evaluate effectively.",
+      "how_to_fix": "Expand each section with detailed bullet points. Aim for 300–700 words total. Describe your role, technologies used, and the outcome for each position or project.",
+      "example": "Developed a REST API using Flask and PostgreSQL that served 500+ daily active users, with 99.9% uptime over 6 months."
     },
     {
       "id": "resume_too_long",
       "category": "Length",
-      "severity": "Low",
-      "title": "Concise Formatting Recommended",
-      "description": "Your resume exceeds 1,000 words. Condense bullet points to maintain recruiter engagement."
+      "priority": "low",
+      "condition": {
+        "type": "word_count_above",
+        "threshold": 1500
+      },
+      "message": "Your resume is longer than 1,500 words. Recruiters spend an average of 7 seconds on the first scan — conciseness is critical.",
+      "how_to_fix": "Trim each bullet to one strong line. Remove positions older than 10 years unless directly relevant. Aim for 300–700 words for entry/mid level; up to 900 for senior.",
+      "example": "Before (3 lines): Responsible for developing, testing, and maintaining the backend services for the company's main product using Python and Flask and also wrote unit tests... After (1 line): Built and maintained Python/Flask microservices with 90%+ test coverage."
     },
     {
-      "id": "quantifiable_impact",
-      "category": "Content",
-      "severity": "Medium",
-      "title": "Include Quantifiable Metrics",
-      "description": "Enhance bullet points with metrics (e.g., 'Increased performance by 35%') to demonstrate concrete business impact."
+      "id": "use_action_verbs",
+      "category": "Formatting",
+      "priority": "medium",
+      "condition": {
+        "type": "action_verb_count_below",
+        "threshold": 3
+      },
+      "message": "Your resume lacks strong action verbs. Bullet points starting with passive language read as weak and are less compelling to both humans and ATS.",
+      "how_to_fix": "Start every bullet point with a past-tense action verb. Replace 'Responsible for' and 'Helped with' with specific verbs that quantify ownership.",
+      "example": "Instead of: Responsible for managing the CI/CD pipeline. Write: Automated CI/CD pipeline using GitHub Actions, cutting deployment time by 30%."
+    },
+    {
+      "id": "avoid_first_person",
+      "category": "Formatting",
+      "priority": "medium",
+      "condition": {
+        "type": "pronoun_count_above",
+        "threshold": 5
+      },
+      "message": "Your resume uses first-person pronouns (I, me, my) more than five times. Resumes should be written in third-person implied style.",
+      "how_to_fix": "Remove all instances of 'I', 'me', 'my', 'we', 'our'. Start bullets directly with a verb or noun. Read each sentence aloud starting with '[Your name]' to verify.",
+      "example": "Instead of: I developed a microservice that I deployed on AWS. Write: Developed and deployed a microservice on AWS, reducing latency by 20ms."
+    },
+    {
+      "id": "add_bullet_formatting",
+      "category": "Formatting",
+      "priority": "medium",
+      "condition": {
+        "type": "bullet_count_below",
+        "threshold": 3
+      },
+      "message": "Your resume lacks bullet point formatting. Paragraphs are harder for ATS systems to parse and for recruiters to scan quickly.",
+      "how_to_fix": "Convert all experience and project descriptions into concise bullet points (•, -, or *). Each bullet should cover one achievement or responsibility.",
+      "example": "Experience\n• Designed and implemented a real-time notifications system using WebSockets (Python, Redis)\n• Reduced API response time by 35% through query optimization and caching with Redis\n• Wrote 80+ unit and integration tests using pytest, achieving 92% code coverage"
+    },
+    {
+      "id": "add_summary_section",
+      "category": "Structure",
+      "priority": "low",
+      "condition": {
+        "type": "section_missing",
+        "section": "summary"
+      },
+      "message": "A professional Summary or Objective section is missing. This is the first thing a recruiter reads and sets the tone for the entire resume.",
+      "how_to_fix": "Add a 2–3 sentence summary at the top. State your level, focus area, and one key differentiator. Tailor it to the target role.",
+      "example": "Summary: Results-driven Software Engineer with 2 years of experience building scalable Python web services. Passionate about clean architecture and automated testing. Seeking a backend role to deliver high-impact features in a product-focused team."
+    },
+    {
+      "id": "add_skills_section",
+      "category": "Structure",
+      "priority": "high",
+      "condition": {
+        "type": "section_missing",
+        "section": "skills"
+      },
+      "message": "No dedicated Skills section was found. ATS systems specifically look for a Skills section to extract and match technical keywords.",
+      "how_to_fix": "Add a Skills section with clearly labelled categories. List tools, languages, and frameworks relevant to the target role.",
+      "example": "Skills\n• Languages: Python, JavaScript, SQL\n• Frameworks: Flask, React, Express\n• Tools: Git, Docker, VS Code\n• Databases: PostgreSQL, MongoDB"
+    },
+    {
+      "id": "add_education_section",
+      "category": "Structure",
+      "priority": "high",
+      "condition": {
+        "type": "section_missing",
+        "section": "education"
+      },
+      "message": "No Education section was detected. Most ATS systems require an Education entry; many job applications reject resumes without one automatically.",
+      "how_to_fix": "Add an Education section with your degree, institution, and graduation year. Include GPA or relevant coursework if strong.",
+      "example": "Education\n• B.Tech in Computer Science — Indian Institute of Technology, Delhi | 2020–2024 | CGPA: 8.6/10"
+    },
+    {
+      "id": "non_standard_headings",
+      "category": "Formatting",
+      "priority": "medium",
+      "condition": {
+        "type": "ats_deduction_contains",
+        "substring": "Missing essential section"
+      },
+      "message": "Some of your section headings may not be recognized by ATS parsers. Non-standard headings like 'About Me' or 'What I've Done' are frequently skipped.",
+      "how_to_fix": "Rename sections to industry-standard headings: Experience, Education, Skills, Projects, Certifications, Summary. Avoid creative or informal labels.",
+      "example": "Use: 'Work Experience' not 'Where I've Worked'. Use: 'Technical Skills' not 'My Toolkit'. Use: 'Projects' not 'Things I Built'."
+    },
+    {
+      "id": "positive_strong_profile",
+      "category": "Positive",
+      "priority": "low",
+      "condition": {
+        "type": "compound_and",
+        "conditions": [
+          {"type": "score_at_least", "field": "resume_score", "threshold": 75},
+          {"type": "ats_score_at_least", "threshold": 70}
+        ]
+      },
+      "message": "Your resume is well-structured and scores strongly on both content quality and ATS compatibility. Focus on the specific skill gaps above to maximize your match rate.",
+      "how_to_fix": "Keep the momentum: update your resume with each new project or role within a week of completion, and tailor the Skills section slightly per application.",
+      "example": "For each new job application: copy your base resume, adjust the Summary to match the job title, and reorder the top 3 skills to mirror the job description's first paragraph."
     }
   ]
 }
