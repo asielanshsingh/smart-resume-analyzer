@@ -146,7 +146,7 @@ def calculate_ats_compatibility_score(
 
     # 2. Standard Section Headings (Max 20)
     sec_weight = weights.get("standard_sections", 20)
-    detected_secs = parsed_resume.get("sections_json") or {}
+    detected_secs = parsed_resume.get("detected_sections") or parsed_resume.get("sections_json") or {}
     essential = ["contact", "education", "experience", "skills"]
     missing_essential = [s for s in essential if s not in detected_secs]
     
@@ -159,9 +159,9 @@ def calculate_ats_compatibility_score(
 
     # 3. Parseable Contact Info (Max 15)
     contact_weight = weights.get("contact_info", 15)
-    contacts = parsed_resume.get("contacts_json") or {}
-    email = contacts.get("email")
-    phone = contacts.get("phone")
+    contacts = parsed_resume.get("contacts") or parsed_resume.get("contacts_json") or {}
+    email = contacts.get("email") or (contacts.get("emails")[0] if isinstance(contacts.get("emails"), list) and contacts.get("emails") else None)
+    phone = contacts.get("phone") or (contacts.get("phones")[0] if isinstance(contacts.get("phones"), list) and contacts.get("phones") else None)
     
     contact_score = 0
     if email:
@@ -176,7 +176,7 @@ def calculate_ats_compatibility_score(
 
     # 4. Text Extraction Quality (Max 10)
     text_weight = weights.get("text_extraction", 10)
-    raw_text = parsed_resume.get("extracted_text", "")
+    raw_text = parsed_resume.get("raw_text") or parsed_resume.get("extracted_text", "")
     word_count = parsed_resume.get("word_count", 0)
     
     text_score = text_weight
@@ -186,7 +186,7 @@ def calculate_ats_compatibility_score(
 
     # 5. Layout & Formatting Risk Check (Max 10)
     layout_weight = weights.get("layout_formatting", 10)
-    warnings = parsed_resume.get("warnings_json") or []
+    warnings = parsed_resume.get("warnings") or parsed_resume.get("warnings_json") or []
     
     layout_score = layout_weight
     if warnings:
@@ -231,8 +231,8 @@ def analyze_ats_compatibility(
     """
     Main evaluation pipeline for ATS keyword checker & compatibility score.
     """
-    raw_text = parsed_resume.get("extracted_text", "")
-    sections_json = parsed_resume.get("sections_json") or {}
+    raw_text = parsed_resume.get("raw_text") or parsed_resume.get("extracted_text", "")
+    sections_json = parsed_resume.get("detected_sections") or parsed_resume.get("sections_json") or {}
 
     # 1. Determine role skill requirements & aliases
     if role_config:
