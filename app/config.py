@@ -26,6 +26,11 @@ class Config:
     SCORING_CONFIG_FILE = BASE_DIR / "data" / "scoring_config.json"
     SUGGESTIONS_FILE = BASE_DIR / "data" / "suggestions.json"
     SECTIONS_CONFIG_FILE = BASE_DIR / "data" / "sections.json"
+    ATS_CONFIG_FILE = BASE_DIR / "data" / "ats_config.json"
+    SKILLS_FILE = BASE_DIR / "data" / "skills.json"
+    
+    # Custom Job Description Limit
+    MAX_JD_LENGTH = int(os.environ.get("MAX_JD_LENGTH", 10000))
     
     # Allowed File Extensions
     ALLOWED_EXTENSIONS = {"pdf", "docx"}

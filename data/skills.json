@@ -1,0 +1,13 @@
+{
+  "skills": [
+    "python", "javascript", "js", "typescript", "ts", "java", "c++", "c#", ".net", "c", "r", "go", "golang", "ruby", "php", "swift", "kotlin", "rust", "scala", "html", "css", "sql", "bash", "shell",
+    "react", "react.js", "angular", "vue", "vue.js", "node", "node.js", "nodejs", "express", "django", "flask", "fastapi", "spring", "spring boot", "asp.net", "laravel", "next.js", "nuxt",
+    "pandas", "numpy", "scikit-learn", "sklearn", "tensorflow", "pytorch", "keras", "opencv", "nltk", "spacy", "matplotlib", "seaborn", "tableau", "power bi", "excel", "spark", "hadoop", "bigquery",
+    "postgresql", "postgres", "mysql", "mongodb", "sqlite", "redis", "elasticsearch", "dynamodb", "oracle", "cassandra",
+    "docker", "kubernetes", "k8s", "aws", "azure", "gcp", "google cloud", "ci/cd", "git", "github", "gitlab", "jenkins", "terraform", "ansible", "linux", "unix", "prometheus", "grafana", "nginx", "yaml", "helm",
+    "rest api", "graphql", "microservices", "agile", "scrum", "jira", "unit testing", "pytest", "jest", "cypress", "selenium",
+    "figma", "sketch", "adobe xd", "wireframing", "prototyping", "user research", "ui design", "ux design", "information architecture",
+    "machine learning", "ml", "deep learning", "ai", "artificial intelligence", "nlp", "natural language processing", "computer vision", "llm", "rag", "langchain",
+    "data structures", "algorithms", "object-oriented programming", "oop", "system design"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "category_weights": {
+    "keyword_match": 40,
+    "standard_sections": 20,
+    "contact_info": 15,
+    "text_extraction": 10,
+    "layout_formatting": 10,
+    "length_suitability": 5
+  },
+  "sections_rules": {
+    "essential_sections": ["contact", "education", "experience", "skills"],
+    "deduction_per_missing": 5
+  },
+  "contact_rules": {
+    "email_points": 8,
+    "phone_points": 7
+  },
+  "text_extraction_rules": {
+    "full_marks": 10,
+    "min_word_threshold": 30
+  },
+  "layout_rules": {
+    "full_marks": 10,
+    "deduction_per_warning": 3.5
+  },
+  "length_rules": {
+    "optimal_min_words": 300,
+    "optimal_max_words": 1000,
+    "too_short_words": 100,
+    "too_long_words": 1500
+  }
+}
