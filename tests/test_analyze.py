@@ -352,6 +352,46 @@ class TestGetHistory:
         assert data["total"] == 0
         assert data["items"] == []
 
+    def test_get_analysis_by_share_token(self, client, seeded_resume):
+        post = client.post(
+            "/api/analyze",
+            json={"resume_id": seeded_resume, "role_id": "web_developer"},
+            content_type="application/json",
+        )
+        data = post.get_json()
+        share_token = data["share_token"]
+        assert share_token is not None
+
+        resp = client.get(f"/api/analysis/{share_token}")
+        assert resp.status_code == 200
+        fetched = resp.get_json()
+        assert fetched["share_token"] == share_token
+        assert fetched["resume_id"] == seeded_resume
+
+    def test_result_route_with_share_token(self, client, seeded_resume):
+        post = client.post(
+            "/api/analyze",
+            json={"resume_id": seeded_resume, "role_id": "software_engineer"},
+            content_type="application/json",
+        )
+        token = post.get_json()["share_token"]
+        resp = client.get(f"/result/{token}")
+        assert resp.status_code == 200
+        assert b"Analysis Dashboard" in resp.data or b"Resume Evaluation Report" in resp.data
+
+    def test_history_does_not_leak_contacts(self, client, seeded_resume):
+        client.post(
+            "/api/analyze",
+            json={"resume_id": seeded_resume, "role_id": "software_engineer"},
+            content_type="application/json",
+        )
+        resp = client.get("/api/history")
+        assert resp.status_code == 200
+        items = resp.get_json()["items"]
+        assert len(items) > 0
+        for item in items:
+            assert "contacts" not in item, "History item should not leak sensitive contact information"
+
     def test_history_per_page_capped_at_50(self, client, seeded_resume):
         self._create_analyses(client, seeded_resume, count=3)
         resp = client.get("/api/history?per_page=200")
@@ -360,6 +400,7 @@ class TestGetHistory:
     def test_history_invalid_page_defaults(self, client, seeded_resume):
         resp = client.get("/api/history?page=abc&per_page=xyz")
         assert resp.status_code == 200  # graceful fallback, not a 400
+
 
 
 # ---------------------------------------------------------------------------

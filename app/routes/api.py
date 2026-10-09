@@ -553,48 +553,47 @@ def analyze_resume():
             }
         }), 500
 
-    return jsonify({
-        "analysis_id": analysis.id,
-        "resume_id": resume.id,
-        "filename": resume.filename,
-        "role": role_label,
-        "resume_score": analysis.resume_score,
-        "breakdown": scoring_result.get("breakdown", {}),
-        "ats_score": analysis.ats_score,
-        "ats_details": ats_details,
-        "matched_skills": ats_result.get("matched_skills", []),
-        "missing_critical_skills": ats_result.get("missing_critical_skills", []),
-        "missing_nice_to_have_skills": ats_result.get("missing_nice_to_have_skills", []),
-        "keyword_match_percentage": ats_result.get("keyword_match_percentage", 0.0),
-        "suggestions": suggestions,
-        "created_at": analysis.created_at.isoformat(),
-    }), 201
+    res_dict = analysis.to_dict(include_sensitive=True)
+    res_dict["analysis_id"] = analysis.id
+    res_dict["ats_details"] = ats_details
+    res_dict["matched_skills"] = ats_result.get("matched_skills", [])
+    res_dict["missing_critical_skills"] = ats_result.get("missing_critical_skills", [])
+    res_dict["missing_nice_to_have_skills"] = ats_result.get("missing_nice_to_have_skills", [])
+    res_dict["keyword_match_percentage"] = ats_result.get("keyword_match_percentage", 0.0)
+    return jsonify(res_dict), 201
+
 
 
 # ---------------------------------------------------------------------------
 # Analysis fetch and history endpoints
 # ---------------------------------------------------------------------------
 
-@api_bp.route("/api/analysis/<int:analysis_id>", methods=["GET"])
-def get_analysis(analysis_id: int):
+@api_bp.route("/api/analysis/<identifier>", methods=["GET"])
+def get_analysis(identifier: str):
     """
-    GET /api/analysis/<id>
+    GET /api/analysis/<identifier>
 
-    Returns a previously persisted analysis by its primary-key ID.
-    Returns 404 if the ID is unknown.
+    Returns a previously persisted analysis by its primary-key ID or share_token.
+    Returns 404 if the identifier is unknown.
     """
     from app.models import db, Analysis
 
-    analysis = db.session.get(Analysis, analysis_id)
+    analysis = None
+    if identifier.isdigit():
+        analysis = db.session.get(Analysis, int(identifier))
+
+    if not analysis:
+        analysis = Analysis.query.filter_by(share_token=identifier).first()
+
     if not analysis:
         return jsonify({
             "error": {
                 "code": "NOT_FOUND",
-                "message": f"Analysis with ID {analysis_id} not found."
+                "message": f"Analysis with identifier '{identifier}' not found."
             }
         }), 404
 
-    return jsonify(analysis.to_dict()), 200
+    return jsonify(analysis.to_dict(include_sensitive=True)), 200
 
 
 @api_bp.route("/api/history", methods=["GET"])
@@ -603,6 +602,7 @@ def get_analysis_history():
     GET /api/history
 
     Returns a paginated list of recent analyses, newest first.
+    Note: Omits sensitive contact details from history items.
 
     Query parameters:
         page     (int, default 1)
@@ -627,9 +627,10 @@ def get_analysis_history():
     )
 
     return jsonify({
-        "items": [a.to_dict() for a in pagination.items],
+        "items": [a.to_dict(include_sensitive=False) for a in pagination.items],
         "total": pagination.total,
         "page": pagination.page,
         "per_page": pagination.per_page,
         "pages": pagination.pages,
     }), 200
+
