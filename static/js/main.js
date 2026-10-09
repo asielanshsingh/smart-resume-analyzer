@@ -165,41 +165,79 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const loadingTitle = document.getElementById('loading-status-title');
+        const loadingDetail = document.getElementById('loading-status-detail');
+
         // Show Loading Overlay & Disable Submit
+        if (loadingTitle) loadingTitle.textContent = 'Uploading Resume...';
+        if (loadingDetail) loadingDetail.textContent = 'Parsing document text and extracting section headers.';
         loadingOverlay.classList.remove('hidden');
         submitBtn.disabled = true;
 
         try {
+            // Stage 1: Upload and Parse Resume
             const formData = new FormData();
             formData.append('file', selectedFile);
 
-            const response = await fetch('/api/upload', {
+            const uploadResp = await fetch('/api/upload', {
                 method: 'POST',
                 body: formData
             });
 
-            const result = await response.json();
+            const uploadResult = await uploadResp.json();
 
-            if (!response.ok) {
-                const errCode = result.error?.code || 'UPLOAD_FAILED';
-                const errMessage = result.error?.message || 'Failed to upload and parse resume.';
+            if (!uploadResp.ok) {
+                const errCode = uploadResult.error?.code || 'UPLOAD_FAILED';
+                const errMessage = uploadResult.error?.message || 'Failed to upload and parse resume.';
                 showError(errCode, errMessage);
                 return;
             }
 
-            // Store resume_id and navigate to dashboard with role and resume_id
-            const resumeId = result.resume_id;
+            const resumeId = uploadResult.resume_id;
+
+            // Stage 2: Run Unified Analysis Pipeline
+            if (loadingTitle) loadingTitle.textContent = 'Analyzing Resume against Role...';
+            if (loadingDetail) loadingDetail.textContent = 'Matching target keywords, evaluating ATS compatibility, and compiling feedback.';
+
+            const analyzeResp = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    resume_id: resumeId,
+                    role_id: roleValue
+                })
+            });
+
+            const analyzeResult = await analyzeResp.json();
+
+            if (!analyzeResp.ok) {
+                const errCode = analyzeResult.error?.code || 'ANALYSIS_FAILED';
+                const errMessage = analyzeResult.error?.message || 'Failed to complete resume analysis.';
+                showError(errCode, errMessage);
+                return;
+            }
+
+            // Store active session state
             sessionStorage.setItem('active_resume_id', resumeId);
-            window.location.href = `/dashboard?role=${encodeURIComponent(roleValue)}&resume_id=${resumeId}`;
+            if (analyzeResult.share_token) {
+                sessionStorage.setItem('active_share_token', analyzeResult.share_token);
+            }
+
+            // Redirect to shareable result URL
+            const shareToken = analyzeResult.share_token || analyzeResult.analysis_id;
+            window.location.href = `/result/${encodeURIComponent(shareToken)}`;
 
         } catch (err) {
-            console.error('Upload error:', err);
+            console.error('Upload & Analyze pipeline error:', err);
             showError('NETWORK_ERROR', 'Network error or server unreachable. Please check your connection and try again.');
         } finally {
             loadingOverlay.classList.add('hidden');
             submitBtn.disabled = false;
         }
     });
+
 
 
     // Initialize Page
