@@ -28,6 +28,28 @@ def create_app(config_class=DevelopmentConfig):
         # Ensure database tables exist
         db.create_all()
 
+        # Schema migration check for legacy SQLite databases missing share_token column
+        try:
+            from sqlalchemy import inspect, text
+            import secrets
+            inspector = inspect(db.engine)
+            if "analyses" in inspector.get_table_names():
+                columns = [c["name"] for c in inspector.get_columns("analyses")]
+                if "share_token" not in columns:
+                    app.logger.info("Migrating database: adding missing 'share_token' column to 'analyses' table...")
+                    with db.engine.begin() as conn:
+                        conn.execute(text("ALTER TABLE analyses ADD COLUMN share_token VARCHAR(64)"))
+                    
+                    # Backfill legacy rows with share tokens
+                    from app.models import Analysis
+                    legacy_rows = Analysis.query.filter((Analysis.share_token == None) | (Analysis.share_token == "")).all()
+                    for row in legacy_rows:
+                        row.share_token = secrets.token_urlsafe(16)
+                    db.session.commit()
+        except Exception as migration_err:
+            app.logger.warning(f"Database schema migration check warning: {migration_err}")
+
+
     # Register Blueprints
     from app.routes import main_bp, api_bp
     app.register_blueprint(main_bp)

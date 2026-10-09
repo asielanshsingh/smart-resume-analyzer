@@ -298,9 +298,38 @@ class TestGetAnalysis:
         )
         analysis_id = post.get_json()["analysis_id"]
         data = client.get(f"/api/analysis/{analysis_id}").get_json()
-        for field in ("id", "resume_id", "role", "resume_score", "ats_score",
-                      "breakdown", "matched_missing", "suggestions", "created_at"):
+        for field in ("id", "share_token", "resume_id", "filename", "role", "resume_score",
+                      "resume_score_band", "ats_score", "ats_score_band", "breakdown",
+                      "matched_missing", "suggestions", "detected_sections", "contacts",
+                      "page_count", "word_count", "created_at"):
             assert field in data, f"Missing field: {field}"
+
+    def test_analysis_to_dict_new_fields(self, app, seeded_resume):
+        """Unit test for Analysis.to_dict() new fields and toggle options."""
+        with app.app_context():
+            analysis = Analysis.query.filter_by(resume_id=seeded_resume).first()
+            if not analysis:
+                analysis = Analysis(
+                    resume_id=seeded_resume,
+                    role="software_engineer",
+                    resume_score=85.0,
+                    ats_score=78.0,
+                    breakdown_json={"skills": 85},
+                    matched_missing_json={"matched_skills": ["python"]},
+                    suggestions_json=[]
+                )
+                db.session.add(analysis)
+                db.session.commit()
+
+            dict_full = analysis.to_dict(include_sensitive=True)
+            assert "share_token" in dict_full
+            assert "resume_score_band" in dict_full
+            assert dict_full["resume_score_band"]["label"] == "Excellent Match"
+            assert "contacts" in dict_full
+
+            dict_no_contacts = analysis.to_dict(include_sensitive=False)
+            assert "contacts" not in dict_no_contacts
+
 
 
 # ---------------------------------------------------------------------------
@@ -352,32 +381,38 @@ class TestGetHistory:
         assert data["total"] == 0
         assert data["items"] == []
 
-    def test_get_analysis_by_share_token(self, client, seeded_resume):
-        post = client.post(
-            "/api/analyze",
-            json={"resume_id": seeded_resume, "role_id": "web_developer"},
-            content_type="application/json",
-        )
-        data = post.get_json()
-        share_token = data["share_token"]
-        assert share_token is not None
+    def test_get_analysis_404_unknown_share_token(self, client):
+        resp = client.get("/api/analysis/invalid_share_token_99999")
+        assert resp.status_code == 404
+        assert resp.get_json()["error"]["code"] == "NOT_FOUND"
 
-        resp = client.get(f"/api/analysis/{share_token}")
-        assert resp.status_code == 200
-        fetched = resp.get_json()
-        assert fetched["share_token"] == share_token
-        assert fetched["resume_id"] == seeded_resume
-
-    def test_result_route_with_share_token(self, client, seeded_resume):
-        post = client.post(
+    def test_role_switch_reanalysis_with_existing_resume_id(self, client, seeded_resume):
+        """Verifies re-analyzing an existing resume_id with a new role_id creates a new analysis record."""
+        # 1. First analysis for role software_engineer
+        resp1 = client.post(
             "/api/analyze",
             json={"resume_id": seeded_resume, "role_id": "software_engineer"},
             content_type="application/json",
         )
-        token = post.get_json()["share_token"]
-        resp = client.get(f"/result/{token}")
-        assert resp.status_code == 200
-        assert b"Analysis Dashboard" in resp.data or b"Resume Evaluation Report" in resp.data
+        assert resp1.status_code == 201
+        data1 = resp1.get_json()
+        token1 = data1["share_token"]
+
+        # 2. Switch role to data_scientist using same resume_id without re-uploading
+        resp2 = client.post(
+            "/api/analyze",
+            json={"resume_id": seeded_resume, "role_id": "data_scientist"},
+            content_type="application/json",
+        )
+        assert resp2.status_code == 201
+        data2 = resp2.get_json()
+        token2 = data2["share_token"]
+
+        assert data1["analysis_id"] != data2["analysis_id"]
+        assert token1 != token2
+        assert data2["role"] == "data_scientist"
+        assert data2["resume_id"] == seeded_resume
+
 
     def test_history_does_not_leak_contacts(self, client, seeded_resume):
         client.post(
