@@ -8,12 +8,13 @@
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
     background: #f1f5f9;
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -31,3 +32,34 @@
     background-color: #eff6ff !important;
     transform: scale(1.01);
 }
+
+/* Print Friendly Styles */
+@media print {
+    header, footer, button, select, .no-print {
+        display: none !important;
+    }
+    body {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+    }
+    main {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    .shadow-sm, .shadow-md, .shadow-xl, .shadow-2xl {
+        box-shadow: none !important;
+    }
+    .border {
+        border-color: #cbd5e1 !important;
+    }
+    details {
+        display: block !important;
+    }
+    details summary {
+        display: none !important;
+    }
+    details > div {
+        display: block !important;
+    }
+}
+

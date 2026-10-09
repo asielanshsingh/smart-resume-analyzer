@@ -28,161 +28,256 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
-    <!-- Header -->
+    <!-- Header Navigation -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <a href="{{ url_for('main.index') }}" class="flex items-center space-x-3 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl p-1">
+                <a href="{{ url_for('main.index') }}" class="flex items-center space-x-3 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl p-1" aria-label="Smart Resume Analyzer Home">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md">
                         RA
                     </div>
-                    <div class="text-left">
+                    <div class="text-left hidden sm:block">
                         <h1 class="text-lg font-bold text-slate-900 leading-tight">Smart Resume Analyzer</h1>
-                        <p class="text-xs text-slate-500 font-medium">Analysis Dashboard</p>
+                        <p class="text-xs text-slate-500 font-medium">Evaluation Dashboard</p>
                     </div>
                 </a>
             </div>
-            <div>
-                <a href="{{ url_for('main.index') }}" class="inline-flex items-center px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400">
-                    &larr; Analyze Another Resume
+            
+            <div class="flex items-center space-x-3">
+                <!-- Print Report Button -->
+                <button type="button" id="print-btn" class="inline-flex items-center px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400" aria-label="Print or Export PDF Report">
+                    <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    <span>Print PDF</span>
+                </button>
+
+                <a href="{{ url_for('main.index') }}" class="inline-flex items-center px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Analyze another resume file">
+                    <span>+ New Resume</span>
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
         
-        <!-- Top Status Banner -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Live ARIA Error Banner -->
+        <div id="dashboard-error-banner" role="alert" aria-live="polite" class="hidden p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-start justify-between shadow-sm">
+            <div class="flex items-start space-x-3">
+                <svg class="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                    <h4 class="font-bold text-rose-900" id="dash-error-code">Error</h4>
+                    <p class="text-xs text-rose-700 mt-0.5" id="dash-error-message">Could not load analysis details.</p>
+                </div>
+            </div>
+            <button type="button" id="dash-retry-btn" class="px-3 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500">
+                Retry
+            </button>
+        </div>
+
+        <!-- Skeleton Loader State -->
+        <div id="dashboard-skeleton" role="status" aria-live="polite" class="space-y-6 animate-pulse">
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+                <div class="h-4 bg-slate-200 rounded w-1/4"></div>
+                <div class="h-8 bg-slate-200 rounded w-1/2"></div>
+                <div class="h-4 bg-slate-200 rounded w-1/3"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl border border-slate-200 p-8 h-44"></div>
+                <div class="bg-white rounded-2xl border border-slate-200 p-8 h-44"></div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white rounded-2xl border border-slate-200 p-8 h-72"></div>
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-8 h-72"></div>
+            </div>
+        </div>
+
+        <!-- Empty State (Unknown / Invalid Share Token) -->
+        <div id="dashboard-empty-state" class="hidden bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm space-y-4">
+            <div class="w-16 h-16 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-2xl font-bold">
+                🔍
+            </div>
+            <h2 class="text-xl font-bold text-slate-900">Analysis Result Not Found</h2>
+            <p class="text-sm text-slate-500 max-w-md mx-auto">
+                The requested analysis link may have expired or is invalid. Upload your resume to generate a fresh report.
+            </p>
             <div>
-                <div class="flex items-center space-x-2">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Target Role</span>
-                    <span id="role-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
-                        Software Engineer
-                    </span>
-                </div>
-                <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">Resume Evaluation Report</h2>
-                <p id="resume-filename-display" class="text-xs sm:text-sm text-slate-500 mt-0.5">
-                    Analyzed Document: <span class="font-medium text-slate-700">sample_resume.pdf</span>
-                </p>
-            </div>
-            <div class="flex items-center space-x-3">
-                <button type="button" id="reanalyze-btn" onclick="window.location.href='/'" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    Upload New Resume
-                </button>
+                <a href="{{ url_for('main.index') }}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    Upload Resume &rarr;
+                </a>
             </div>
         </div>
 
-        <!-- Score Gauges Row -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Main Dashboard Content Container -->
+        <div id="dashboard-content" class="hidden space-y-6">
             
-            <!-- Overall Score Card -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex items-center space-x-6">
-                <div class="relative w-32 h-32 flex-shrink-0 flex items-center justify-center">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                        <path class="text-slate-100" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path id="overall-score-circle" class="text-blue-600 transition-all duration-1000 ease-out" stroke-dasharray="82.5, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                        <span id="overall-score-text" class="text-3xl font-extrabold text-slate-900 leading-none">82.5</span>
-                        <span class="text-[10px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">out of 100</span>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="text-base font-bold text-slate-900">Overall Resume Score</h3>
-                    <p class="text-xs text-slate-500 mt-1">Weighted evaluation based on required skills, section structure, word count, and keyword density.</p>
-                    <div class="mt-3">
-                        <span id="overall-score-status" class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Strong Candidate Match
+            <!-- Top Role Switcher Header -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Target Role</span>
+                        <span id="role-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                            Loading...
                         </span>
                     </div>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Resume Evaluation Report</h2>
+                    <p id="resume-filename-display" class="text-xs sm:text-sm text-slate-500">
+                        Analyzed Document: <span id="filename-text" class="font-medium text-slate-700">--</span>
+                    </p>
+                </div>
+
+                <!-- "Analyze Another Role" Switcher -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div class="relative min-w-[220px]">
+                        <label for="role-switch-select" class="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+                            Switch Role Target
+                        </label>
+                        <select id="role-switch-select" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-xs transition-all disabled:opacity-50">
+                            <option value="" disabled selected>Loading available roles...</option>
+                        </select>
+                        <div id="role-switch-spinner" class="hidden absolute right-3 top-7">
+                            <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- ATS Score Card -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex items-center space-x-6">
-                <div class="relative w-32 h-32 flex-shrink-0 flex items-center justify-center">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                        <path class="text-slate-100" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path id="ats-score-circle" class="text-indigo-600 transition-all duration-1000 ease-out" stroke-dasharray="78, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                        <span id="ats-score-text" class="text-3xl font-extrabold text-slate-900 leading-none">78.0%</span>
-                        <span class="text-[10px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">ATS Pass</span>
+            <!-- Score Gauges Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Overall Score Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex items-center space-x-6">
+                    <div class="relative w-32 h-32 flex-shrink-0 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36" role="img" id="overall-score-svg" aria-label="Overall Resume Score Gauge">
+                            <path class="text-slate-100" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path id="overall-score-circle" class="transition-all duration-1000 ease-out" stroke-dasharray="0, 100" stroke-width="3.5" stroke-linecap="round" stroke="#2563eb" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                            <span id="overall-score-text" class="text-3xl font-extrabold text-slate-900 leading-none">0</span>
+                            <span class="text-[10px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">out of 100</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Overall Resume Score</h3>
+                        <p class="text-xs text-slate-500 mt-1">Deterministic subscore evaluation for skills, formatting, action verbs, and section presence.</p>
+                        <div class="mt-3">
+                            <span id="overall-score-status" class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                                Evaluating...
+                            </span>
+                        </div>
                     </div>
                 </div>
+
+                <!-- ATS Score Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex items-center space-x-6">
+                    <div class="relative w-32 h-32 flex-shrink-0 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36" role="img" id="ats-score-svg" aria-label="ATS Compatibility Score Gauge">
+                            <path class="text-slate-100" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path id="ats-score-circle" class="transition-all duration-1000 ease-out" stroke-dasharray="0, 100" stroke-width="3.5" stroke-linecap="round" stroke="#4f46e5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                            <span id="ats-score-text" class="text-3xl font-extrabold text-slate-900 leading-none">0%</span>
+                            <span class="text-[10px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">ATS Pass</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">ATS Compatibility Score</h3>
+                        <p class="text-xs text-slate-500 mt-1">Measures parsing readability, section recognition, and keyword coverage for automated screeners.</p>
+                        <div class="mt-3">
+                            <span id="ats-score-status" class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                                Evaluating...
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Breakdown Chart & Skills Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Chart Card (Takes 1 Col on Desktop) -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 mb-1">Section Score Breakdown</h3>
+                        <p class="text-xs text-slate-500 mb-4">Category scores evaluated from backend configuration rules.</p>
+                    </div>
+                    <div class="relative h-64 w-full flex items-center justify-center">
+                        <canvas id="breakdownChart" aria-label="Section Score Breakdown Chart" role="img"></canvas>
+                    </div>
+                </div>
+
+                <!-- Skill Gap Card (Takes 2 Cols on Desktop) -->
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 mb-1">ATS Skill Match & Keyword Gap Analysis</h3>
+                        <p class="text-xs text-slate-500">Extracted technical skills compared against role keyword requirements.</p>
+                    </div>
+
+                    <!-- Matched Skills -->
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center space-x-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                <span>Matched Skills & Keywords (<span id="matched-count">0</span>)</span>
+                            </span>
+                        </div>
+                        <div id="matched-skills-container" class="flex flex-wrap gap-2 max-h-52 overflow-y-auto pr-1">
+                            <!-- Chips loaded via JS textContent DOM construction -->
+                        </div>
+                    </div>
+
+                    <!-- Missing Skills -->
+                    <div class="pt-4 border-t border-slate-100">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold uppercase tracking-wider text-rose-700 flex items-center space-x-1.5">
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                <span>Missing Role Skills (<span id="missing-count">0</span>)</span>
+                            </span>
+                        </div>
+                        <div id="missing-skills-container" class="flex flex-wrap gap-2 max-h-52 overflow-y-auto pr-1">
+                            <!-- Chips loaded via JS textContent DOM construction -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detected Sections and Contact Info Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Contacts Panel -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <h3 class="text-base font-bold text-slate-900">Extracted Contact Information</h3>
+                    <div id="contacts-container" class="space-y-2 text-xs">
+                        <!-- Loaded via JS -->
+                    </div>
+                </div>
+
+                <!-- Sections Panel -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <h3 class="text-base font-bold text-slate-900">Detected Resume Sections</h3>
+                    <div id="sections-container" class="flex flex-wrap gap-2">
+                        <!-- Loaded via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prioritized Improvement Suggestions -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
                 <div>
-                    <h3 class="text-base font-bold text-slate-900">ATS Compatibility Score</h3>
-                    <p class="text-xs text-slate-500 mt-1">Measures parsing readability, section header recognition, and keyword coverage for automated screeners.</p>
-                    <div class="mt-3">
-                        <span id="ats-score-status" class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                            High Readability
-                        </span>
-                    </div>
+                    <h3 class="text-base font-bold text-slate-900">Prioritized Actionable Feedback</h3>
+                    <p class="text-xs text-slate-500">Tailored suggestions generated from rule evaluation engine, ordered by impact priority.</p>
                 </div>
-            </div>
-        </div>
 
-        <!-- Section Breakdown Chart & Skills Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- Chart Card (Takes 1 Col on Desktop) -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
-                <div>
-                    <h3 class="text-base font-bold text-slate-900 mb-1">Section Score Breakdown</h3>
-                    <p class="text-xs text-slate-500 mb-4">Component sub-scores evaluated out of 100.</p>
-                </div>
-                <div class="relative h-64 w-full flex items-center justify-center">
-                    <canvas id="breakdownChart"></canvas>
+                <div id="suggestions-container" class="space-y-3">
+                    <!-- Suggestions rendered dynamically via JS DOM nodes -->
                 </div>
             </div>
 
-            <!-- Skill Gap Card (Takes 2 Cols on Desktop) -->
-            <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
-                <div>
-                    <h3 class="text-base font-bold text-slate-900 mb-1">ATS Skill Match Analysis</h3>
-                    <p class="text-xs text-slate-500">Comparison of candidate's extracted skills against required role keywords.</p>
-                </div>
-
-                <!-- Matched Skills -->
-                <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center space-x-1.5">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <span>Matched Skills & Keywords (<span id="matched-count">7</span>)</span>
-                        </span>
-                    </div>
-                    <div id="matched-skills-container" class="flex flex-wrap gap-2">
-                        <!-- Chips loaded via JS -->
-                    </div>
-                </div>
-
-                <!-- Missing Skills -->
-                <div class="pt-4 border-t border-slate-100">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold uppercase tracking-wider text-rose-700 flex items-center space-x-1.5">
-                            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                            <span>Missing Recommended Skills (<span id="missing-count">5</span>)</span>
-                        </span>
-                    </div>
-                    <div id="missing-skills-container" class="flex flex-wrap gap-2">
-                        <!-- Chips loaded via JS -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Prioritized Improvement Suggestions -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-            <div>
-                <h3 class="text-base font-bold text-slate-900">Prioritized Actionable Feedback</h3>
-                <p class="text-xs text-slate-500">Tailored suggestions ordered by impact to improve your resume's ranking.</p>
-            </div>
-
-            <div id="suggestions-container" class="space-y-3">
-                <!-- Suggestions rendered dynamically via JS -->
-            </div>
         </div>
     </main>
 
