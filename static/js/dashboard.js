@@ -22,6 +22,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return el;
     }
 
+    // Helper: get a display label from a skill that may be a string or an object
+    function skillLabel(item) {
+        if (item === null || item === undefined) return '';
+        if (typeof item === 'string') return item;
+        return String(item.skill ?? item.name ?? item.keyword ?? item.term ?? item.label ?? '');
+    }
+
+    // Helper: where a matched skill was found, if the API says so
+    function skillSections(item) {
+        if (!item || typeof item !== 'object') return '';
+        const found = item.sections ?? item.found_in ?? item.locations ?? [];
+        return Array.isArray(found) ? found.join(', ') : String(found || '');
+    }
+
+    // Helper: turn a breakdown entry (number or {points, max}) into a 0-100 value
+    function categoryPercent(entry) {
+        if (typeof entry === 'number') return entry;
+        if (!entry || typeof entry !== 'object') return 0;
+        const earned = Number(entry.points ?? entry.earned ?? entry.score ?? 0);
+        const max = Number(entry.max_score ?? entry.max ?? entry.max_points ?? entry.maximum ?? 0);
+        return max > 0 ? Math.round((earned / max) * 100) : Math.round(earned);
+    }
+
     function showError(code, message) {
         if (errorCodeEl) errorCodeEl.textContent = `Error [${code}]`;
         if (errorMessageEl) errorMessageEl.textContent = message;
@@ -101,11 +124,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const newShareToken = result.share_token || result.analysis_id;
                 sessionStorage.setItem('active_share_token', newShareToken);
-                
+
                 // Update URL without full page refresh
                 history.pushState(null, '', `/result/${encodeURIComponent(newShareToken)}`);
 
-                renderDashboard(result);
+                const fullResp = await fetch(`/api/analysis/${encodeURIComponent(newShareToken)}`);
+                if (!fullResp.ok) throw new Error('Could not load the new analysis.');
+                const fullData = await fullResp.json();
+                currentResumeId = fullData.resume_id;
+                renderDashboard(fullData);
             } catch (err) {
                 console.error('Error switching role:', err);
                 showError('NETWORK_ERROR', 'Failed to reach server when switching roles. Please try again.');
@@ -244,7 +271,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 matchedContainer.appendChild(createEl('p', 'text-xs text-slate-400 italic', 'No matched target skills detected.'));
             } else {
                 matchedSkills.forEach(skill => {
-                    const chip = createEl('span', 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs', skill);
+                    const chip = createEl('span', 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs', skillLabel(skill));
+                    const where = skillSections(skill);
+                    if (where) chip.title = `Found in: ${where}`;
                     matchedContainer.appendChild(chip);
                 });
             }
@@ -264,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Highlight critical missing skills prominently
                 missingCritical.forEach(skill => {
-                    const chip = createEl('span', 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-300 shadow-2xs', `CRITICAL: ${skill}`);
+                    const chip = createEl('span', 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-300 shadow-2xs', `CRITICAL: ${skillLabel(skill)}`);
                     missingContainer.appendChild(chip);
                 });
 
@@ -275,8 +304,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 4. Render Breakdown Chart dynamically from API breakdown object
+        // 4. Render Breakdown Chart & Expandable Category Score Details dynamically
         renderChart(data.breakdown || {});
+        renderBreakdownDetails(data.breakdown || {});
 
         // 5. Render Contacts & Sections
         renderContactsAndSections(data);
@@ -284,6 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 6. Render Prioritized Improvement Suggestions
         renderSuggestions(data.suggestions || []);
     }
+
 
     // Dynamic Chart.js category breakdown rendering
     function renderChart(breakdownObj) {
@@ -298,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rawKeys.length === 0) return;
 
         const labels = rawKeys.map(k => k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
-        const values = rawKeys.map(k => breakdownObj[k]);
+        const values = rawKeys.map(k => categoryPercent(breakdownObj[k]));
 
         const chartColors = [
             'rgba(37, 99, 235, 0.85)',
@@ -329,7 +360,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            label: (context) => ` Score: ${context.parsed.x} / 100`
+                            label: (context) => {
+                                const entry = breakdownObj[rawKeys[context.dataIndex]];
+                                if (entry && typeof entry === 'object' && entry.max_score) {
+                                    return ` ${entry.score} / ${entry.max_score} points (${context.parsed.x}%)`;
+                                }
+                                return ` ${context.parsed.x}%`;
+                            }
                         }
                     }
                 },
@@ -349,8 +386,71 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Render accessible expandable details list for breakdown categories (XSS-safe textContent only)
+    function renderBreakdownDetails(breakdownObj) {
+        const container = document.getElementById('breakdown-details-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const rawKeys = Object.keys(breakdownObj);
+        if (rawKeys.length === 0) {
+            container.appendChild(createEl('p', 'text-xs text-slate-400 italic', 'No category breakdown details available.'));
+            return;
+        }
+
+        rawKeys.forEach(catKey => {
+            const entry = breakdownObj[catKey];
+            const titleText = catKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+            let scoreVal = 0;
+            let maxVal = 0;
+            let reasonsList = [];
+
+            if (typeof entry === 'number') {
+                scoreVal = entry;
+                maxVal = 100;
+            } else if (entry && typeof entry === 'object') {
+                scoreVal = Number(entry.score ?? entry.points ?? 0);
+                maxVal = Number(entry.max_score ?? entry.max ?? 100);
+                reasonsList = Array.isArray(entry.reasons) ? entry.reasons : [];
+            }
+
+            const detailsEl = document.createElement('details');
+            detailsEl.className = 'group rounded-lg border border-slate-200 bg-white overflow-hidden text-xs';
+
+            const summaryEl = document.createElement('summary');
+            summaryEl.className = 'px-3 py-2 font-semibold text-slate-800 bg-slate-50 hover:bg-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between transition-colors';
+
+            const leftSpan = createEl('span', 'font-bold text-slate-900', titleText);
+            const rightSpan = createEl('span', 'font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200', `${scoreVal} / ${maxVal} pts`);
+
+            summaryEl.appendChild(leftSpan);
+            summaryEl.appendChild(rightSpan);
+            detailsEl.appendChild(summaryEl);
+
+            const contentDiv = createEl('div', 'p-3 space-y-1.5 bg-white text-slate-700 border-t border-slate-100');
+
+            if (reasonsList.length > 0) {
+                const listEl = createEl('ul', 'space-y-1 pl-4 list-disc text-slate-600');
+                reasonsList.forEach(r => {
+                    const li = createEl('li', 'leading-normal', r);
+                    listEl.appendChild(li);
+                });
+                contentDiv.appendChild(listEl);
+            } else {
+                const noReasons = createEl('p', 'text-slate-400 italic', 'No specific notes for this category.');
+                contentDiv.appendChild(noReasons);
+            }
+
+            detailsEl.appendChild(contentDiv);
+            container.appendChild(detailsEl);
+        });
+    }
+
     // Contacts & Sections DOM rendering
     function renderContactsAndSections(data) {
+
         const contactsContainer = document.getElementById('contacts-container');
         if (contactsContainer) {
             contactsContainer.innerHTML = '';
@@ -418,9 +518,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         suggestionsList.forEach(s => {
             const card = createEl('div', 'p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/60 transition-all space-y-2 shadow-2xs');
-            
+
             const headerRow = createEl('div', 'flex items-center justify-between gap-2');
-            
+
             const prioUpper = (s.priority || 'Medium').toUpperCase();
             let badgeClass = 'bg-blue-100 text-blue-800 border-blue-200';
             if (prioUpper === 'HIGH') badgeClass = 'bg-rose-100 text-rose-800 border-rose-200 font-bold';

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,12 +27,14 @@
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
+
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
     <!-- Header / Navigation -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                <div
+                    class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md">
                     RA
                 </div>
                 <div>
@@ -40,41 +43,46 @@
                 </div>
             </div>
             <div class="flex items-center space-x-4">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                <span
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                     Capstone Prototype v1.0
                 </span>
-                <a href="{{ url_for('main.dashboard') }}" class="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
-                    Demo Dashboard &rarr;
-                </a>
+
             </div>
         </div>
     </header>
 
     <!-- Main Container -->
     <main class="flex-grow max-w-4xl w-full mx-auto px-4 py-8 sm:py-12">
-        
+
         <!-- Hero Title -->
         <div class="text-center mb-8 sm:mb-12">
             <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
                 Optimize Your Resume for ATS & Target Roles
             </h2>
             <p class="mt-3 text-sm sm:text-base text-slate-600 max-w-2xl mx-auto">
-                Upload your resume (PDF or DOCX) and select a target job role to get an instant AI score, skill gap analysis, and prioritized improvements.
+                Upload your resume (PDF or DOCX) and select a target job role to get an instant AI score, skill gap
+                analysis, and prioritized improvements.
             </p>
         </div>
 
         <!-- Global ARIA Live Error Banner -->
-        <div id="error-banner" role="alert" aria-live="polite" class="hidden mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-start space-x-3 shadow-sm">
-            <svg class="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        <div id="error-banner" role="alert" aria-live="polite"
+            class="hidden mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-start space-x-3 shadow-sm">
+            <svg class="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div class="flex-grow">
                 <span class="font-bold" id="error-code">Error:</span>
                 <span id="error-message">Something went wrong. Please try again.</span>
             </div>
-            <button type="button" id="dismiss-error" class="text-rose-400 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 rounded-md p-1" aria-label="Dismiss Error">
+            <button type="button" id="dismiss-error"
+                class="text-rose-400 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 rounded-md p-1"
+                aria-label="Dismiss Error">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
         </div>
@@ -82,24 +90,27 @@
         <!-- Upload Card -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
             <form id="upload-form" class="space-y-6" novalidate>
-                
+
                 <!-- Role Selection -->
                 <div>
                     <label for="role-select" class="block text-sm font-semibold text-slate-900 mb-2">
                         1. Select Target Job Role <span class="text-rose-500">*</span>
                     </label>
                     <div class="relative">
-                        <select id="role-select" name="role" required class="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm disabled:opacity-50">
+                        <select id="role-select" name="role" required
+                            class="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm disabled:opacity-50">
                             <option value="" disabled selected>Loading available roles...</option>
                         </select>
                         <div id="roles-loading-indicator" class="hidden absolute right-3 top-3.5">
                             <svg class="animate-spin h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                             </svg>
                         </div>
                     </div>
-                    <p class="mt-1.5 text-xs text-slate-500">Roles define target skills, aliases, and section weighting rules.</p>
+                    <p class="mt-1.5 text-xs text-slate-500">Roles define target skills, aliases, and section weighting
+                        rules.</p>
                 </div>
 
                 <!-- Drag & Drop Zone -->
@@ -107,38 +118,51 @@
                     <label class="block text-sm font-semibold text-slate-900 mb-2">
                         2. Upload Resume Document <span class="text-rose-500">*</span>
                     </label>
-                    
-                    <div id="drop-zone" class="border-2 border-dashed border-slate-300 hover:border-blue-500 focus-within:border-blue-600 rounded-2xl p-8 text-center bg-slate-50 hover:bg-blue-50/50 transition-all cursor-pointer relative group">
-                        <input type="file" id="file-input" name="resume" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" aria-label="Upload Resume Document">
-                        
+
+                    <div id="drop-zone"
+                        class="border-2 border-dashed border-slate-300 hover:border-blue-500 focus-within:border-blue-600 rounded-2xl p-8 text-center bg-slate-50 hover:bg-blue-50/50 transition-all cursor-pointer relative group">
+                        <input type="file" id="file-input" name="resume"
+                            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            aria-label="Upload Resume Document">
+
                         <div id="drop-zone-prompt" class="space-y-3">
-                            <div class="w-14 h-14 mx-auto rounded-full bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                            <div
+                                class="w-14 h-14 mx-auto rounded-full bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
                                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                 </svg>
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-slate-800">
-                                    <span class="text-blue-600 hover:underline">Click to browse</span> or drag and drop your file here
+                                    <span class="text-blue-600 hover:underline">Click to browse</span> or drag and drop
+                                    your file here
                                 </p>
                                 <p class="text-xs text-slate-500 mt-1">Supports PDF or DOCX (Max 16 MB)</p>
                             </div>
                         </div>
 
                         <!-- Selected File Preview -->
-                        <div id="file-preview" class="hidden flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-sm z-20 relative">
+                        <div id="file-preview"
+                            class="hidden flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-sm z-20 relative">
                             <div class="flex items-center space-x-3 overflow-hidden">
-                                <div id="file-icon" class="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                <div id="file-icon"
+                                    class="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
                                     DOC
                                 </div>
                                 <div class="text-left truncate">
-                                    <p id="file-name" class="text-sm font-semibold text-slate-900 truncate">resume.pdf</p>
+                                    <p id="file-name" class="text-sm font-semibold text-slate-900 truncate">resume.pdf
+                                    </p>
                                     <p id="file-size" class="text-xs text-slate-500">1.2 MB</p>
                                 </div>
                             </div>
-                            <button type="button" id="remove-file-btn" class="p-2 text-slate-400 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 rounded-lg transition-colors" title="Remove file" aria-label="Remove uploaded file">
+                            <button type="button" id="remove-file-btn"
+                                class="p-2 text-slate-400 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 rounded-lg transition-colors"
+                                title="Remove file" aria-label="Remove uploaded file">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                             </button>
                         </div>
@@ -147,10 +171,12 @@
 
                 <!-- Action Button -->
                 <div>
-                    <button type="submit" id="submit-btn" class="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 focus:bg-blue-700 text-white font-semibold text-sm shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button type="submit" id="submit-btn"
+                        class="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 focus:bg-blue-700 text-white font-semibold text-sm shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/30 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <span>Analyze Resume</span>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
                     </button>
                 </div>
@@ -158,13 +184,18 @@
         </div>
 
         <!-- Analysis Loading State Modal / Overlay -->
-        <div id="loading-overlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="loading-status-title">
+        <div id="loading-overlay"
+            class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            role="dialog" aria-modal="true" aria-labelledby="loading-status-title">
             <div class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl space-y-4">
                 <div class="w-16 h-16 mx-auto rounded-full bg-blue-50 flex items-center justify-center relative">
-                    <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin">
+                    </div>
                 </div>
-                <h3 id="loading-status-title" class="text-lg font-bold text-slate-900" aria-live="polite">Uploading Resume...</h3>
-                <p id="loading-status-detail" class="text-xs text-slate-500" aria-live="polite">Parsing document text and extracting section headers.</p>
+                <h3 id="loading-status-title" class="text-lg font-bold text-slate-900" aria-live="polite">Uploading
+                    Resume...</h3>
+                <p id="loading-status-detail" class="text-xs text-slate-500" aria-live="polite">Parsing document text
+                    and extracting section headers.</p>
             </div>
         </div>
 
@@ -172,25 +203,31 @@
         <!-- Info Grid -->
         <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div class="bg-white p-5 rounded-xl border border-slate-200 text-center space-y-2">
-                <div class="w-10 h-10 mx-auto rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                <div
+                    class="w-10 h-10 mx-auto rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
                     🎯
                 </div>
                 <h4 class="text-sm font-bold text-slate-900">Deterministic Scoring</h4>
-                <p class="text-xs text-slate-500">Transparent rule-based scoring algorithm with zero AI hallucination.</p>
+                <p class="text-xs text-slate-500">Transparent rule-based scoring algorithm with zero AI hallucination.
+                </p>
             </div>
             <div class="bg-white p-5 rounded-xl border border-slate-200 text-center space-y-2">
-                <div class="w-10 h-10 mx-auto rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                <div
+                    class="w-10 h-10 mx-auto rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
                     ⚡
                 </div>
                 <h4 class="text-sm font-bold text-slate-900">ATS Keyword Gap</h4>
-                <p class="text-xs text-slate-500">Identifies matched vs missing keywords for your specific target role.</p>
+                <p class="text-xs text-slate-500">Identifies matched vs missing keywords for your specific target role.
+                </p>
             </div>
             <div class="bg-white p-5 rounded-xl border border-slate-200 text-center space-y-2">
-                <div class="w-10 h-10 mx-auto rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                <div
+                    class="w-10 h-10 mx-auto rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
                     💡
                 </div>
                 <h4 class="text-sm font-bold text-slate-900">Actionable Feedback</h4>
-                <p class="text-xs text-slate-500">Prioritized high, medium, and low recommendations to boost your score.</p>
+                <p class="text-xs text-slate-500">Prioritized high, medium, and low recommendations to boost your score.
+                </p>
             </div>
         </div>
     </main>
@@ -204,4 +241,5 @@
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
+
 </html>
