@@ -1,16 +1,33 @@
 import json
+import logging as _logging
 import re
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Set, Tuple
+from typing import Any
 
 _nlp = None
+_log = _logging.getLogger(__name__)
+
 
 def get_spacy_nlp():
-    """Lazy singleton loader for spaCy model."""
+    """Lazy singleton loader for the spaCy en_core_web_sm model.
+
+    Loads the model once per process and caches it.  If the model is not
+    installed the error is logged clearly and re-raised so callers surface a
+    clean 500 rather than a bare traceback.
+    """
     global _nlp
     if _nlp is None:
-        import spacy
-        _nlp = spacy.load("en_core_web_sm")
+        try:
+            import spacy
+
+            _nlp = spacy.load("en_core_web_sm")
+            _log.info("spaCy model en_core_web_sm loaded successfully.")
+        except OSError:
+            _log.error(
+                "spaCy model 'en_core_web_sm' is not installed. "
+                "Run: python -m spacy download en_core_web_sm"
+            )
+            raise
     return _nlp
 
 
@@ -51,20 +68,20 @@ def lemmatize_text(text: str) -> str:
 
 def match_skills_in_text(
     skill: str,
-    aliases: List[str],
+    aliases: list[str],
     raw_text: str,
-    sections_json: Optional[Dict[str, str]] = None,
-    lemmatized_raw_text: Optional[str] = None,
-    lemmatized_sections: Optional[Dict[str, str]] = None
-) -> Tuple[bool, Optional[str], List[str]]:
+    sections_json: dict[str, str] | None = None,
+    lemmatized_raw_text: str | None = None,
+    lemmatized_sections: dict[str, str] | None = None
+) -> tuple[bool, str | None, list[str]]:
     """
     Checks if canonical skill or any of its aliases match in raw_text or sections.
     Uses regex plural tolerance and optional spaCy lemmatized text comparison.
     Returns (is_matched, matched_by_term, list_of_sections_found).
     """
     terms_to_check = [skill] + [a for a in aliases if a.strip().lower() != skill.strip().lower()]
-    sections_found: Set[str] = set()
-    matched_term: Optional[str] = None
+    sections_found: set[str] = set()
+    matched_term: str | None = None
     is_matched = False
 
     for term in terms_to_check:
@@ -111,7 +128,7 @@ def match_skills_in_text(
 def extract_skills_from_jd(
     jd_text: str,
     skills_file_path: Path
-) -> Dict[str, List[str]]:
+) -> dict[str, list[str]]:
     """
     Extracts technical skills generically from custom job description text
     using master skill dictionary in skills.json and spaCy lemma/phrase matching.
@@ -120,13 +137,13 @@ def extract_skills_from_jd(
         return {"required_skills": [], "preferred_skills": [], "skill_aliases": {}}
 
     try:
-        with open(skills_file_path, "r", encoding="utf-8") as f:
+        with open(skills_file_path, encoding="utf-8") as f:
             skills_data = json.load(f)
-            master_skills: List[str] = skills_data.get("skills", [])
+            master_skills: list[str] = skills_data.get("skills", [])
     except Exception:
         master_skills = []
 
-    matched_skills: Set[str] = set()
+    matched_skills: set[str] = set()
     jd_clean = jd_text.lower()
     lemmatized_jd = lemmatize_text(jd_text)
 
@@ -145,7 +162,7 @@ def extract_skills_from_jd(
         return {"required_skills": [], "preferred_skills": [], "skill_aliases": {}}
 
     sorted_matched = sorted(list(matched_skills))
-    
+
     # Split skills into required (first ~65%) and preferred (remaining)
     split_idx = max(1, int(len(sorted_matched) * 0.65))
     required = sorted_matched[:split_idx]
@@ -159,17 +176,17 @@ def extract_skills_from_jd(
 
 
 def calculate_ats_compatibility_score(
-    parsed_resume: Dict[str, Any],
+    parsed_resume: dict[str, Any],
     keyword_match_pct: float,
     ats_config_file: Path
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculates ATS compatibility score out of 100 based on keyword match,
     section headings, contact info, text extraction, layout risk flags, and word count.
     Returns score and array of deduction reason strings.
     """
     try:
-        with open(ats_config_file, "r", encoding="utf-8") as f:
+        with open(ats_config_file, encoding="utf-8") as f:
             cfg = json.load(f)
     except Exception:
         cfg = {
@@ -184,7 +201,7 @@ def calculate_ats_compatibility_score(
         }
 
     weights = cfg.get("category_weights", {})
-    deductions: List[str] = []
+    deductions: list[str] = []
 
     # 1. Keyword Match (Max 40)
     kw_weight = weights.get("keyword_match", 40)
@@ -198,7 +215,7 @@ def calculate_ats_compatibility_score(
     detected_secs = parsed_resume.get("detected_sections") or parsed_resume.get("sections_json") or {}
     essential = ["contact", "education", "experience", "skills"]
     missing_essential = [s for s in essential if s not in detected_secs]
-    
+
     sec_score = sec_weight
     if missing_essential:
         deduction_per_sec = 5
@@ -211,13 +228,13 @@ def calculate_ats_compatibility_score(
     contacts = parsed_resume.get("contacts") or parsed_resume.get("contacts_json") or {}
     email = contacts.get("email") or (contacts.get("emails")[0] if isinstance(contacts.get("emails"), list) and contacts.get("emails") else None)
     phone = contacts.get("phone") or (contacts.get("phones")[0] if isinstance(contacts.get("phones"), list) and contacts.get("phones") else None)
-    
+
     contact_score = 0
     if email:
         contact_score += 8
     else:
         deductions.append("No email address detected (-8 points).")
-        
+
     if phone:
         contact_score += 7
     else:
@@ -227,7 +244,7 @@ def calculate_ats_compatibility_score(
     text_weight = weights.get("text_extraction", 10)
     raw_text = parsed_resume.get("raw_text") or parsed_resume.get("extracted_text", "")
     word_count = parsed_resume.get("word_count", 0)
-    
+
     text_score = text_weight
     if not raw_text or word_count < 30:
         text_score = 0
@@ -236,7 +253,7 @@ def calculate_ats_compatibility_score(
     # 5. Layout & Formatting Risk Check (Max 10)
     layout_weight = weights.get("layout_formatting", 10)
     warnings = parsed_resume.get("warnings") or parsed_resume.get("warnings_json") or []
-    
+
     layout_score = layout_weight
     if warnings:
         lost = min(layout_weight, len(warnings) * 3.5)
@@ -271,12 +288,12 @@ def calculate_ats_compatibility_score(
 
 
 def analyze_ats_compatibility(
-    parsed_resume: Dict[str, Any],
-    role_config: Optional[Dict[str, Any]] = None,
-    job_description: Optional[str] = None,
-    skills_file_path: Optional[Path] = None,
-    ats_config_file: Optional[Path] = None
-) -> Dict[str, Any]:
+    parsed_resume: dict[str, Any],
+    role_config: dict[str, Any] | None = None,
+    job_description: str | None = None,
+    skills_file_path: Path | None = None,
+    ats_config_file: Path | None = None
+) -> dict[str, Any]:
     """
     Main evaluation pipeline for ATS keyword checker & compatibility score.
     """
@@ -317,9 +334,9 @@ def analyze_ats_compatibility(
         }
 
     # 2. Evaluate Required / Critical Skills
-    matched_skills_list: List[Dict[str, Any]] = []
-    missing_critical: List[str] = []
-    missing_nice_to_have: List[str] = []
+    matched_skills_list: list[dict[str, Any]] = []
+    missing_critical: list[str] = []
+    missing_nice_to_have: list[str] = []
 
     matched_req_count = 0
     for skill in req_skills:
@@ -363,7 +380,7 @@ def analyze_ats_compatibility(
     # 4. Keyword Match Percentage Calculation
     total_role_skills = len(req_skills) + len(pref_skills)
     total_matched_skills = matched_req_count + matched_pref_count
-    
+
     if total_role_skills > 0:
         keyword_match_pct = (total_matched_skills / total_role_skills) * 100.0
     else:

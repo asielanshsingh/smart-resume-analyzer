@@ -1,5 +1,6 @@
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
@@ -54,7 +55,7 @@ class Resume(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(255), nullable=False)
-    upload_time = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    upload_time = db.Column(db.DateTime, default=lambda: datetime.now(UTC), nullable=False)
     extracted_text = db.Column(db.Text, nullable=True)
     file_hash = db.Column(db.String(64), index=True, nullable=False)
     page_count = db.Column(db.Integer, default=1, nullable=False)
@@ -100,7 +101,7 @@ class Analysis(db.Model):
     breakdown_json = db.Column(db.JSON, nullable=False)
     matched_missing_json = db.Column(db.JSON, nullable=False)
     suggestions_json = db.Column(db.JSON, nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     def to_dict(self, include_sensitive: bool = True):
         res_score_band = get_score_band(self.resume_score)

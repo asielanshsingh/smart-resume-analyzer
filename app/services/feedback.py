@@ -9,16 +9,15 @@ resume text directly; all inputs come from already-computed service outputs.
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Catalog loader
 # ---------------------------------------------------------------------------
 
-def load_suggestions_catalog(suggestions_file: Path) -> Dict[str, Any]:
+def load_suggestions_catalog(suggestions_file: Path) -> dict[str, Any]:
     """Load the full suggestions catalog JSON.  Returns the parsed dict."""
-    with open(suggestions_file, "r", encoding="utf-8") as fh:
+    with open(suggestions_file, encoding="utf-8") as fh:
         return json.load(fh)
 
 
@@ -26,7 +25,7 @@ def load_suggestions_catalog(suggestions_file: Path) -> Dict[str, Any]:
 # Condition evaluators
 # ---------------------------------------------------------------------------
 
-def _get_word_count(scoring_result: Dict[str, Any]) -> int:
+def _get_word_count(scoring_result: dict[str, Any]) -> int:
     """Extract word_count from the scoring_result breakdown (completeness reasons)."""
     try:
         completeness_reasons = (
@@ -43,7 +42,7 @@ def _get_word_count(scoring_result: Dict[str, Any]) -> int:
     return 0
 
 
-def _get_action_verb_count(scoring_result: Dict[str, Any]) -> int:
+def _get_action_verb_count(scoring_result: dict[str, Any]) -> int:
     """Extract the action verb count from completeness breakdown reasons."""
     try:
         completeness_reasons = (
@@ -65,7 +64,7 @@ def _get_action_verb_count(scoring_result: Dict[str, Any]) -> int:
     return 0
 
 
-def _get_pronoun_count(scoring_result: Dict[str, Any]) -> int:
+def _get_pronoun_count(scoring_result: dict[str, Any]) -> int:
     """Extract first-person pronoun count from completeness breakdown reasons."""
     try:
         completeness_reasons = (
@@ -82,7 +81,7 @@ def _get_pronoun_count(scoring_result: Dict[str, Any]) -> int:
     return 0
 
 
-def _get_bullet_count(scoring_result: Dict[str, Any]) -> int:
+def _get_bullet_count(scoring_result: dict[str, Any]) -> int:
     """Infer bullet count from completeness reasons (>= 3 bullets → 'Good bullet point')."""
     try:
         completeness_reasons = (
@@ -101,9 +100,9 @@ def _get_bullet_count(scoring_result: Dict[str, Any]) -> int:
 
 
 def _evaluate_condition(
-    condition: Dict[str, Any],
-    scoring_result: Dict[str, Any],
-    ats_result: Dict[str, Any],
+    condition: dict[str, Any],
+    scoring_result: dict[str, Any],
+    ats_result: dict[str, Any],
 ) -> bool:
     """
     Evaluate a single condition dict against scoring + ATS results.
@@ -253,10 +252,10 @@ def _evaluate_condition(
 # ---------------------------------------------------------------------------
 
 def generate_suggestions(
-    scoring_result: Dict[str, Any],
-    ats_result: Dict[str, Any],
+    scoring_result: dict[str, Any],
+    ats_result: dict[str, Any],
     suggestions_file: Path,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Evaluate all catalog rules against scoring and ATS results.
 
@@ -279,17 +278,17 @@ def generate_suggestions(
         Ordered list of triggered suggestion dicts, capped sensibly.
     """
     catalog_data = load_suggestions_catalog(suggestions_file)
-    rules: List[Dict[str, Any]] = catalog_data.get("suggestions_catalog", [])
-    config: Dict[str, Any] = catalog_data.get("suggestions_config", {})
+    rules: list[dict[str, Any]] = catalog_data.get("suggestions_catalog", [])
+    config: dict[str, Any] = catalog_data.get("suggestions_config", {})
 
     max_suggestions: int = config.get("max_suggestions", 12)
-    priority_weights: Dict[str, int] = config.get(
+    priority_weights: dict[str, int] = config.get(
         "priority_weights", {"high": 3, "medium": 2, "low": 1}
     )
 
     POSITIVE_ID = "positive_strong_profile"
 
-    triggered: Dict[str, Dict[str, Any]] = {}  # id → rule; de-dups by id
+    triggered: dict[str, dict[str, Any]] = {}  # id → rule; de-dups by id
 
     for rule in rules:
         rule_id = rule.get("id", "")
@@ -303,7 +302,7 @@ def generate_suggestions(
     positive_rule = triggered.pop(POSITIVE_ID, None)
 
     # Build sorted actionable list
-    def _sort_key(rule: Dict[str, Any]):
+    def _sort_key(rule: dict[str, Any]):
         priority = rule.get("priority", "low")
         weight = priority_weights.get(priority, 1)
         return (-weight, rule.get("id", ""))  # secondary: stable alphabetic

@@ -1,7 +1,8 @@
+
 import pytest
-import math
-from pathlib import Path
+
 from app.services.scoring import analyze_resume_score, safe_clamp_score
+
 
 @pytest.fixture
 def scoring_config_path(app):
@@ -217,6 +218,7 @@ def test_strong_vs_weak_contrast(perfect_resume_parsed_data, weak_resume_parsed_
 def test_score_endpoint(client):
     """Test POST /api/score endpoint with a real database record."""
     from io import BytesIO
+
     from tests.test_upload import create_pdf_bytes
 
     sample_lines = [

@@ -1,7 +1,9 @@
 import logging
 import os
+
 from flask import Flask, jsonify
-from app.config import Config, DevelopmentConfig
+
+from app.config import DevelopmentConfig
 from app.models import db
 
 
@@ -32,7 +34,7 @@ def create_app(config_class: type = DevelopmentConfig) -> Flask:
         _migrate_share_token(app)
 
     # Register blueprints
-    from app.routes import main_bp, api_bp
+    from app.routes import api_bp, main_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(api_bp)
@@ -60,8 +62,9 @@ def create_app(config_class: type = DevelopmentConfig) -> Flask:
 def _migrate_share_token(app: Flask) -> None:
     """Add share_token column to analyses table if it is missing (one-time migration)."""
     try:
-        from sqlalchemy import inspect, text
         import secrets
+
+        from sqlalchemy import inspect, text
 
         inspector = inspect(db.engine)
         if "analyses" not in inspector.get_table_names():
@@ -81,7 +84,7 @@ def _migrate_share_token(app: Flask) -> None:
         from app.models import Analysis
 
         legacy_rows = Analysis.query.filter(
-            (Analysis.share_token == None) | (Analysis.share_token == "")  # noqa: E711
+            (Analysis.share_token == None) | (Analysis.share_token == "")
         ).all()
         for row in legacy_rows:
             row.share_token = secrets.token_urlsafe(16)
@@ -153,7 +156,7 @@ def register_error_handlers(app: Flask) -> None:
     @app.errorhandler(500)
     def internal_server_error(error):
         # Log with traceback server-side; never expose it to the client
-        app.logger.error("Internal server error: %s", error, exc_info=True)
+        app.logger.exception("Internal server error: %s", error)
         return jsonify(
             {
                 "error": {

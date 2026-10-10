@@ -1,15 +1,16 @@
+import hashlib
 import io
-import re
-import os
 import json
 import math
-import hashlib
+import re
 import unicodedata
-from typing import Dict, Any, List, Tuple
 from pathlib import Path
+from typing import Any
+
+import docx
 import pdfplumber
 import pypdf
-import docx
+
 
 # Custom Exceptions for Resume Upload & Parsing
 class ResumeParsingError(Exception):
@@ -115,7 +116,7 @@ def normalize_text(text: str) -> str:
     return normalized.strip()
 
 
-def extract_contacts(text: str) -> Dict[str, List[str]]:
+def extract_contacts(text: str) -> dict[str, list[str]]:
     """Extracts email, phone, LinkedIn, and GitHub contacts via regex."""
     contacts = {
         "emails": [],
@@ -166,7 +167,7 @@ def extract_contacts(text: str) -> Dict[str, List[str]]:
     return contacts
 
 
-def load_section_synonyms(config_path: Path) -> Dict[str, List[str]]:
+def load_section_synonyms(config_path: Path) -> dict[str, list[str]]:
     """Loads section synonym map from JSON config file."""
     if not config_path.exists():
         # Fallback default synonyms if file doesn't exist
@@ -179,12 +180,12 @@ def load_section_synonyms(config_path: Path) -> Dict[str, List[str]]:
             "projects": ["projects", "key projects", "academic projects"],
             "certifications": ["certifications", "certificates", "licenses & certifications"]
         }
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         data = json.load(f)
         return data.get("synonyms", {})
 
 
-def detect_sections(text: str, synonym_map: Dict[str, List[str]]) -> Dict[str, str]:
+def detect_sections(text: str, synonym_map: dict[str, list[str]]) -> dict[str, str]:
     """Detects resume sections based on synonym map matching."""
     sections = {
         "contact": "",
@@ -202,7 +203,7 @@ def detect_sections(text: str, synonym_map: Dict[str, List[str]]) -> Dict[str, s
 
     lines = text.splitlines()
     current_section = "contact"
-    section_lines: Dict[str, List[str]] = {key: [] for key in sections}
+    section_lines: dict[str, list[str]] = {key: [] for key in sections}
 
     # Reverse mapping for fast matching
     synonym_lookup = {}
@@ -233,7 +234,7 @@ def detect_sections(text: str, synonym_map: Dict[str, List[str]]) -> Dict[str, s
     return sections
 
 
-def parse_pdf(raw_bytes: bytes) -> Tuple[str, int, List[str]]:
+def parse_pdf(raw_bytes: bytes) -> tuple[str, int, list[str]]:
     """Parses PDF bytes using pdfplumber with pypdf fallback."""
     text_content = []
     page_count = 0
@@ -263,7 +264,7 @@ def parse_pdf(raw_bytes: bytes) -> Tuple[str, int, List[str]]:
 
     except pdfplumber.pdfminer.pdfdocument.PDFPasswordIncorrect:
         raise EncryptedFileError()
-    except Exception as e:
+    except Exception:
         # Fallback to pypdf
         try:
             reader = pypdf.PdfReader(io.BytesIO(raw_bytes))
@@ -279,7 +280,7 @@ def parse_pdf(raw_bytes: bytes) -> Tuple[str, int, List[str]]:
         except pypdf.errors.FileNotDecryptedError:
             raise EncryptedFileError()
         except Exception as fallback_err:
-            raise UnreadableFileError(f"Failed to parse PDF document: {str(fallback_err)}")
+            raise UnreadableFileError(f"Failed to parse PDF document: {fallback_err!s}")
 
     full_raw_text = "\n".join(text_content).strip()
 
@@ -303,7 +304,7 @@ def parse_pdf(raw_bytes: bytes) -> Tuple[str, int, List[str]]:
     return full_raw_text, page_count, warnings
 
 
-def parse_docx(raw_bytes: bytes) -> Tuple[str, int, List[str]]:
+def parse_docx(raw_bytes: bytes) -> tuple[str, int, list[str]]:
     """Parses DOCX bytes including paragraphs, headers, and tables."""
     text_content = []
     warnings = []
@@ -311,7 +312,7 @@ def parse_docx(raw_bytes: bytes) -> Tuple[str, int, List[str]]:
     try:
         doc = docx.Document(io.BytesIO(raw_bytes))
     except Exception as e:
-        raise UnreadableFileError(f"Failed to open DOCX package: {str(e)}")
+        raise UnreadableFileError(f"Failed to open DOCX package: {e!s}")
 
     # Headers
     for section in doc.sections:
@@ -350,7 +351,7 @@ def parse_resume_bytes(
     sections_config_file: Path,
     max_upload_mb: int = 5,
     min_word_count: int = 30
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Main entrypoint to validate and parse resume bytes into structured dictionary.
     """

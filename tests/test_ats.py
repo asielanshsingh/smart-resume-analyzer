@@ -1,16 +1,16 @@
 import json
-import pytest
-from uuid import uuid4
 from pathlib import Path
-from app.models import db, Resume
+from uuid import uuid4
+
+from app.models import Resume, db
 from app.services.ats import (
-    get_spacy_nlp,
+    analyze_ats_compatibility,
     build_skill_regex,
+    get_spacy_nlp,
     is_short_or_symbol_skill,
-    lemmatize_text,
     match_skills_in_text,
-    analyze_ats_compatibility
 )
+
 
 def test_spacy_lazy_singleton():
     """Verify spaCy NLP model is loaded once per process as a lazy singleton."""
@@ -95,7 +95,7 @@ def test_critical_vs_nice_to_have_split():
     }
 
     result = analyze_ats_compatibility(parsed_resume, role_config=role_config)
-    
+
     assert "javascript" in result["missing_critical_skills"]
     assert "python" not in result["missing_critical_skills"]
     assert "docker" in result["missing_nice_to_have_skills"]
@@ -219,12 +219,12 @@ def test_api_ats_zero_match_resume(client, app):
 def test_dynamic_role_addition_at_runtime(client, app, tmp_path):
     """Verify adding a new role to roles.json at runtime works without code modifications."""
     roles_file = Path(app.config["ROLES_FILE"])
-    with open(roles_file, "r", encoding="utf-8") as f:
+    with open(roles_file, encoding="utf-8") as f:
         roles_data = json.load(f)
 
     # Backup original roles
     original_roles = list(roles_data["roles"])
-    
+
     try:
         new_role = {
             "id": "cybersecurity_analyst",

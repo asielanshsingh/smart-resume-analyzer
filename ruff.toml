@@ -1,0 +1,41 @@
+# ruff.toml — linting configuration
+line-length = 120
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "G",    # flake8-logging-format
+    "LOG",  # flake8-logging
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific rules
+    "PLW",  # pylint warnings
+]
+ignore = [
+    # BLE001: broad except is intentional in service-layer defensive guards
+    "BLE001",
+    # S110: try-except-pass used intentionally in parser fallback paths
+    "S110",
+    # RUF001/RUF002/RUF003: em-dash / en-dash in pre-existing strings and comments
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    # E402: top-of-file load_dotenv() before Flask imports is intentional in wsgi.py
+    "E402",
+    # PLW0603: global for lazy-loaded singleton is the intended pattern
+    "PLW0603",
+    # SIM108: ternary operator would hurt readability for multi-line conditions
+    "SIM108",
+]
+
+[lint.per-file-ignores]
+# Tests may retain imports for documentation; test-fixture strings are deliberately long
+"tests/*" = ["F401", "E741", "E501"]
+# Scoring module uses single-letter variable 'l' for line-level metrics
+"app/services/scoring.py" = ["E741"]
+# Models have long JSON column type strings
+"app/models.py" = ["E501"]

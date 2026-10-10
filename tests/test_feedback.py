@@ -11,10 +11,13 @@ Tests cover:
 """
 
 import json
-import pytest
 from pathlib import Path
-from app.services.feedback import generate_suggestions, _evaluate_condition, load_suggestions_catalog
 
+import pytest
+
+from app.services.feedback import (
+    generate_suggestions,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers – minimal result stubs
@@ -63,7 +66,7 @@ def _scoring(
         comp_reasons.append("Standard text formatting: +1/2")
 
     if action_verbs >= 3 and pronoun_count <= 3:
-        comp_reasons.append(f"Strong action-oriented language without excessive first-person pronouns: +2/2")
+        comp_reasons.append("Strong action-oriented language without excessive first-person pronouns: +2/2")
     elif pronoun_count > 5:
         comp_reasons.append(f"High first-person pronoun frequency detected ({pronoun_count} uses): +0/2")
     else:

@@ -1,6 +1,9 @@
 import json
-from flask import jsonify, current_app, request
+
+from flask import current_app, jsonify, request
+
 from app.routes import api_bp
+
 
 @api_bp.route("/health", methods=["GET"])
 def health_check():
@@ -16,11 +19,11 @@ def get_roles():
     """Returns list of supported target job roles loaded from data/roles.json."""
     roles_path = current_app.config["ROLES_FILE"]
     try:
-        with open(roles_path, "r", encoding="utf-8") as f:
+        with open(roles_path, encoding="utf-8") as f:
             data = json.load(f)
         return jsonify(data), 200
-    except Exception as e:
-        current_app.logger.error(f"Failed to read roles file: {e}")
+    except Exception:
+        current_app.logger.exception("Failed to read roles file")
         return jsonify({
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
@@ -31,11 +34,17 @@ def get_roles():
 @api_bp.route("/api/upload", methods=["POST"])
 def upload_resume():
     """Endpoint to validate, parse, and store uploaded resume (PDF or DOCX)."""
-    from uuid import uuid4
     from pathlib import Path
+    from uuid import uuid4
+
     from werkzeug.utils import secure_filename
-    from app.models import db, Resume
-    from app.services.parser import parse_resume_bytes, compute_file_hash, ResumeParsingError
+
+    from app.models import Resume, db
+    from app.services.parser import (
+        ResumeParsingError,
+        compute_file_hash,
+        parse_resume_bytes,
+    )
 
     # 1. Check file part in request
     if not request.files or ("file" not in request.files and "resume" not in request.files):
@@ -112,11 +121,11 @@ def upload_resume():
         }), e.status_code
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Error parsing resume upload: {e}", exc_info=True)
+        current_app.logger.exception("Error parsing resume upload")
         return jsonify({
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
-                "message": f"An unexpected error occurred while processing the resume: {str(e)}"
+                "message": f"An unexpected error occurred while processing the resume: {e!s}"
             }
         }), 500
     finally:
@@ -131,7 +140,7 @@ def upload_resume():
 @api_bp.route("/api/resumes/<int:resume_id>", methods=["GET"])
 def get_resume(resume_id: int):
     """Retrieves parsed resume details by ID."""
-    from app.models import db, Resume
+    from app.models import Resume, db
     resume = db.session.get(Resume, resume_id)
     if not resume:
         return jsonify({
@@ -146,7 +155,7 @@ def get_resume(resume_id: int):
 @api_bp.route("/api/score", methods=["POST"])
 def score_resume():
     """Calculates deterministic resume score (out of 100) and category breakdown."""
-    from app.models import db, Resume
+    from app.models import Resume, db
     from app.services.scoring import analyze_resume_score
 
     payload = request.get_json(silent=True) or {}
@@ -183,7 +192,7 @@ def score_resume():
 @api_bp.route("/api/ats", methods=["POST"])
 def evaluate_ats():
     """Evaluates ATS keyword matching and compatibility score for a resume against a target role or job description."""
-    from app.models import db, Resume
+    from app.models import Resume, db
     from app.services.ats import analyze_ats_compatibility
 
     if not request.is_json:
@@ -254,7 +263,7 @@ def evaluate_ats():
     if role_id:
         roles_path = current_app.config["ROLES_FILE"]
         try:
-            with open(roles_path, "r", encoding="utf-8") as f:
+            with open(roles_path, encoding="utf-8") as f:
                 roles_data = json.load(f)
             roles_list = roles_data.get("roles", [])
             valid_roles = [r["id"] for r in roles_list]
@@ -339,10 +348,10 @@ def analyze_resume():
         role_id     (str, optional) – mutually exclusive with job_description
         job_description (str, optional) – mutually exclusive with role_id
     """
-    from app.models import db, Resume, Analysis
-    from app.services.scoring import analyze_resume_score
+    from app.models import Analysis, Resume, db
     from app.services.ats import analyze_ats_compatibility
     from app.services.feedback import generate_suggestions
+    from app.services.scoring import analyze_resume_score
 
     # --- JSON body validation ---
     if not request.is_json:
@@ -415,7 +424,7 @@ def analyze_resume():
     if role_id:
         roles_path = current_app.config["ROLES_FILE"]
         try:
-            with open(roles_path, "r", encoding="utf-8") as f:
+            with open(roles_path, encoding="utf-8") as f:
                 roles_data = json.load(f)
             roles_list = roles_data.get("roles", [])
             valid_role_ids = [r["id"] for r in roles_list]
@@ -505,8 +514,8 @@ def analyze_resume():
             suggestions_file=current_app.config["SUGGESTIONS_FILE"]
         )
 
-    except Exception as e:
-        current_app.logger.error(f"Analysis pipeline error: {e}", exc_info=True)
+    except Exception:
+        current_app.logger.exception("Analysis pipeline error")
         return jsonify({
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
@@ -545,9 +554,9 @@ def analyze_resume():
         )
         db.session.add(analysis)
         db.session.commit()
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        current_app.logger.error(f"Failed to persist analysis: {e}", exc_info=True)
+        current_app.logger.exception("Failed to persist analysis")
         return jsonify({
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
@@ -578,7 +587,7 @@ def get_analysis(identifier: str):
     Returns a previously persisted analysis by its primary-key ID or share_token.
     Returns 404 if the identifier is unknown.
     """
-    from app.models import db, Analysis
+    from app.models import Analysis, db
 
     analysis = None
     if identifier.isdigit():
@@ -610,7 +619,7 @@ def get_analysis_history():
         page     (int, default 1)
         per_page (int, default 10, max 50)
     """
-    from app.models import db, Analysis
+    from app.models import Analysis, db
 
     try:
         page = max(1, int(request.args.get("page", 1)))

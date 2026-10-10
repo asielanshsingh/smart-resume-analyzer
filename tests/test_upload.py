@@ -1,9 +1,10 @@
 import io
+
+import pypdf
 import pytest
-from pathlib import Path
 from docx import Document
 from reportlab.pdfgen import canvas
-import pypdf
+
 
 # Helper function to generate PDF bytes programmatically
 def create_pdf_bytes(text_lines=None, encrypted=False, password="secret") -> bytes:

@@ -1,10 +1,11 @@
-import re
 import json
 import math
-from typing import Dict, Any, List, Tuple
+import re
 from pathlib import Path
+from typing import Any
 
-def load_scoring_config(config_path: Path) -> Dict[str, Any]:
+
+def load_scoring_config(config_path: Path) -> dict[str, Any]:
     """Loads scoring configuration rules from JSON file."""
     if not config_path.exists():
         # Safe fallback configuration
@@ -19,7 +20,7 @@ def load_scoring_config(config_path: Path) -> Dict[str, Any]:
             },
             "action_verbs": ["developed", "built", "created", "designed", "implemented", "engineered", "optimized", "managed"]
         }
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -34,7 +35,7 @@ def safe_clamp_score(val: Any, min_val: int = 0, max_val: int = 100) -> int:
         return min_val
 
 
-def evaluate_structure(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
+def evaluate_structure(parsed_data: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     """Evaluates structure category (Max 20 pts)."""
     max_pts = config.get("category_weights", {}).get("structure", 20)
     sections = parsed_data.get("detected_sections", {})
@@ -83,7 +84,7 @@ def evaluate_structure(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> D
     }
 
 
-def evaluate_skills(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
+def evaluate_skills(parsed_data: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     """Evaluates skills category (Max 20 pts)."""
     max_pts = config.get("category_weights", {}).get("skills", 20)
     sections = parsed_data.get("detected_sections", {})
@@ -143,7 +144,7 @@ def evaluate_skills(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> Dict
     }
 
 
-def evaluate_education(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
+def evaluate_education(parsed_data: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     """Evaluates education category (Max 15 pts)."""
     max_pts = config.get("category_weights", {}).get("education", 15)
     sections = parsed_data.get("detected_sections", {})
@@ -194,7 +195,7 @@ def evaluate_education(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> D
     }
 
 
-def evaluate_projects(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
+def evaluate_projects(parsed_data: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     """Evaluates projects category (Max 15 pts)."""
     max_pts = config.get("category_weights", {}).get("projects", 15)
     sections = parsed_data.get("detected_sections", {})
@@ -215,7 +216,7 @@ def evaluate_projects(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> Di
 
     if len(project_entries) >= min_projects * 2 or len(lines) >= 4:
         score += 10.0
-        reasons.append(f"Multiple structured project entries detected: +10/10")
+        reasons.append("Multiple structured project entries detected: +10/10")
     elif len(project_entries) >= 1:
         score += 6.0
         reasons.append("Single project entry detected: +6/10")
@@ -244,7 +245,7 @@ def evaluate_projects(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> Di
     }
 
 
-def evaluate_experience(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
+def evaluate_experience(parsed_data: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     """Evaluates work experience/internships category with Fresher substitution rule (Max 10 pts)."""
     max_pts = config.get("category_weights", {}).get("experience", 10)
     sections = parsed_data.get("detected_sections", {})
@@ -305,7 +306,7 @@ def evaluate_experience(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> 
     }
 
 
-def evaluate_contact(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
+def evaluate_contact(parsed_data: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     """Evaluates contact info category (Max 10 pts)."""
     max_pts = config.get("category_weights", {}).get("contact", 10)
     contacts = parsed_data.get("contacts", {})
@@ -351,7 +352,7 @@ def evaluate_contact(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> Dic
     }
 
 
-def evaluate_completeness(parsed_data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
+def evaluate_completeness(parsed_data: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     """Evaluates completeness, formatting, bullet usage, and action verb density (Max 10 pts)."""
     max_pts = config.get("category_weights", {}).get("completeness", 10)
     word_count = parsed_data.get("word_count", 0)
@@ -415,7 +416,7 @@ def evaluate_completeness(parsed_data: Dict[str, Any], config: Dict[str, Any]) -
     }
 
 
-def analyze_resume_score(parsed_data: Dict[str, Any], config_path: Path) -> Dict[str, Any]:
+def analyze_resume_score(parsed_data: dict[str, Any], config_path: Path) -> dict[str, Any]:
     """
     Main entrypoint to evaluate total deterministic resume score out of 100 points.
     Returns clamped integer total score and structured breakdown with human-readable reasons.

@@ -28,7 +28,6 @@ def test_404_error_format(client):
 def test_400_error_format(client):
     """Test 400 error handler formatting."""
     # Requesting abort 400 inside test app context
-    from flask import abort
     with client.application.test_request_context():
         response = client.get("/non-existent-page-url")  # verified 404
         assert response.status_code == 404

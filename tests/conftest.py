@@ -1,13 +1,15 @@
 import pytest
+
 from app import create_app
 from app.config import TestingConfig
 from app.models import db
+
 
 @pytest.fixture
 def app():
     """Create and configure a Flask app for testing."""
     app = create_app(TestingConfig)
-    
+
     with app.app_context():
         db.create_all()
         yield app

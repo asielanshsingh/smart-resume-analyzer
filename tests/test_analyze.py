@@ -9,12 +9,9 @@ Covers:
   - All bad-input error paths matching /api/ats validation style
 """
 
-import io
-import json
 import pytest
-from pathlib import Path
-from app.models import db, Resume, Analysis
 
+from app.models import Analysis, Resume, db
 
 # ---------------------------------------------------------------------------
 # Fixture helpers – minimal in-memory PDF/DOCX bytes

@@ -7,8 +7,6 @@ Tests for global error handlers:
 """
 import io
 
-import pytest
-
 
 class TestNotFoundHandler:
     def test_unknown_route_returns_404_json(self, client):
