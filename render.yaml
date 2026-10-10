@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: smart-resume-analyzer
+    runtime: python
+    buildCommand: "bash build.sh"
+    startCommand: "gunicorn wsgi:app --workers 2 --bind 0.0.0.0:$PORT --timeout 120 --log-level info"
+    plan: free
+
+    # Persistent disk — spaCy model is installed at build time so the disk is
+    # used only for the SQLite database. The free tier disk is temporary and
+    # will be wiped on every deploy; use a paid plan for durable storage.
+    disk:
+      name: app-data
+      mountPath: /data
+      sizeGB: 1
+
+    envVars:
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: DATABASE_URL
+        value: "sqlite:////data/app.db"
+      - key: MAX_UPLOAD_MB
+        value: "16"
+      # SECRET_KEY must be set manually in the Render dashboard
+      - key: SECRET_KEY
+        generateValue: true
