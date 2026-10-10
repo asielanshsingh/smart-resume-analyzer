@@ -308,12 +308,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderChart(data.breakdown || {});
         renderBreakdownDetails(data.breakdown || {});
 
-        // 5. Render Contacts & Sections
+        // 5. Render ATS Compatibility Category Breakdown & Criteria Deductions
+        const atsDet = data.ats_details || data.matched_missing?.ats_details || {};
+        renderAtsBreakdown(atsDet);
+
+        // 6. Render Contacts & Sections
         renderContactsAndSections(data);
 
-        // 6. Render Prioritized Improvement Suggestions
+        // 7. Render Prioritized Improvement Suggestions
         renderSuggestions(data.suggestions || []);
     }
+
 
 
     // Dynamic Chart.js category breakdown rendering
@@ -448,8 +453,106 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Render accessible expandable details list for ATS categories and deductions (XSS-safe textContent only)
+    function renderAtsBreakdown(atsDetails) {
+        const container = document.getElementById('ats-breakdown-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const catScores = (atsDetails && atsDetails.category_scores) || {};
+        const deductions = (atsDetails && atsDetails.deductions) || [];
+
+        const categories = [
+            { key: 'keyword_match', title: 'Keyword Match', max: 40, kw: ['keyword', 'match rate'] },
+            { key: 'standard_sections', title: 'Standard Section Headings', max: 20, kw: ['section'] },
+            { key: 'contact_info', title: 'Parseable Contact Info', max: 15, kw: ['email', 'phone', 'contact'] },
+            { key: 'text_extraction', title: 'Text Extraction Quality', max: 10, kw: ['text extraction', 'readability'] },
+            { key: 'layout_formatting', title: 'Layout & Formatting Risk', max: 10, kw: ['layout', 'formatting'] },
+            { key: 'length_suitability', title: 'Length Suitability', max: 5, kw: ['length', 'short', 'words'] }
+        ];
+
+        categories.forEach(cat => {
+            const earnedPts = Number(catScores[cat.key] ?? cat.max);
+            const maxPts = cat.max;
+
+            // Filter deduction messages relevant to this category
+            const catDeductions = deductions.filter(d => {
+                const lower = d.toLowerCase();
+                return cat.kw.some(k => lower.includes(k));
+            });
+
+            const detailsEl = document.createElement('details');
+            detailsEl.className = 'group rounded-lg border border-slate-200 bg-white overflow-hidden text-xs';
+
+            const summaryEl = document.createElement('summary');
+            summaryEl.className = 'px-3 py-2 font-semibold text-slate-800 bg-slate-50 hover:bg-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between transition-colors';
+
+            const leftSpan = createEl('span', 'font-bold text-slate-900', cat.title);
+            
+            const isFullScore = earnedPts >= maxPts;
+            const badgeClass = isFullScore 
+                ? 'font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200' 
+                : 'font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200';
+
+            const rightSpan = createEl('span', badgeClass, `${earnedPts} / ${maxPts} pts`);
+
+            summaryEl.appendChild(leftSpan);
+            summaryEl.appendChild(rightSpan);
+            detailsEl.appendChild(summaryEl);
+
+            const contentDiv = createEl('div', 'p-3 space-y-1.5 bg-white text-slate-700 border-t border-slate-100');
+
+            if (catDeductions.length > 0) {
+                const listEl = createEl('ul', 'space-y-1 pl-4 list-disc text-rose-700');
+                catDeductions.forEach(d => {
+                    const li = createEl('li', 'leading-normal font-medium', d);
+                    listEl.appendChild(li);
+                });
+                contentDiv.appendChild(listEl);
+            } else {
+                const fullPtsNote = createEl('p', 'text-emerald-700 font-medium', 'Full points earned — no ATS deductions for this criterion.');
+                contentDiv.appendChild(fullPtsNote);
+            }
+
+            detailsEl.appendChild(contentDiv);
+            container.appendChild(detailsEl);
+        });
+
+        // Any leftover general deductions not captured by specific categories
+        const unassignedDeductions = deductions.filter(d => {
+            const lower = d.toLowerCase();
+            return !categories.some(cat => cat.kw.some(k => lower.includes(k)));
+        });
+
+        if (unassignedDeductions.length > 0) {
+            const generalCard = document.createElement('details');
+            generalCard.className = 'group rounded-lg border border-rose-200 bg-rose-50/50 overflow-hidden text-xs';
+            
+            const generalSummary = document.createElement('summary');
+            generalSummary.className = 'px-3 py-2 font-bold text-rose-900 bg-rose-100 hover:bg-rose-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-500 flex items-center justify-between';
+            
+            const leftTitle = createEl('span', '', 'Additional ATS Deductions');
+            const rightBadge = createEl('span', 'font-semibold text-rose-800 bg-rose-200 px-2 py-0.5 rounded border border-rose-300', `${unassignedDeductions.length} deduction(s)`);
+            generalSummary.appendChild(leftTitle);
+            generalSummary.appendChild(rightBadge);
+            generalCard.appendChild(generalSummary);
+
+            const genContent = createEl('div', 'p-3 bg-white text-rose-800 border-t border-rose-200');
+            const genList = createEl('ul', 'space-y-1 pl-4 list-disc text-rose-700');
+            unassignedDeductions.forEach(d => {
+                genList.appendChild(createEl('li', 'leading-normal font-medium', d));
+            });
+            genContent.appendChild(genList);
+            generalCard.appendChild(genContent);
+
+            container.appendChild(generalCard);
+        }
+    }
+
     // Contacts & Sections DOM rendering
     function renderContactsAndSections(data) {
+
 
         const contactsContainer = document.getElementById('contacts-container');
         if (contactsContainer) {

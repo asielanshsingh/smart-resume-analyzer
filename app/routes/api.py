@@ -515,6 +515,13 @@ def analyze_resume():
         }), 500
 
     # --- Persist to Analysis table ---
+    ats_details = {
+        "target_title": ats_result.get("target_title", ""),
+        "ats_score": ats_result.get("ats_score", 0),
+        "category_scores": ats_result.get("category_scores", {}),
+        "deductions": ats_result.get("deductions", []),
+    }
+
     matched_missing = {
         "matched_skills": ats_result.get("matched_skills", []),
         "missing_critical_skills": ats_result.get("missing_critical_skills", []),
@@ -522,14 +529,9 @@ def analyze_resume():
         "keyword_match_percentage": ats_result.get("keyword_match_percentage", 0.0),
         "matched_skills_count": ats_result.get("matched_skills_count", 0),
         "total_role_skills_count": ats_result.get("total_role_skills_count", 0),
+        "ats_details": ats_details,
     }
 
-    ats_details = {
-        "target_title": ats_result.get("target_title", ""),
-        "ats_score": ats_result.get("ats_score", 0),
-        "category_scores": ats_result.get("category_scores", {}),
-        "deductions": ats_result.get("deductions", []),
-    }
 
     try:
         analysis = Analysis(

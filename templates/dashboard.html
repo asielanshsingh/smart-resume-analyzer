@@ -255,7 +255,8 @@
 
                     <!-- Expandable Category Score Details & Reasons -->
                     <div class="mt-4 pt-4 border-t border-slate-100 space-y-2">
-                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Category Evaluation Details</h4>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Category Evaluation
+                            Details</h4>
                         <div id="breakdown-details-container" class="space-y-2 max-h-60 overflow-y-auto pr-1">
                             <!-- Populated via JS textContent DOM construction -->
                         </div>
@@ -294,15 +295,19 @@
                                 <span>Missing Role Skills (<span id="missing-count">0</span>)</span>
                             </span>
                         </div>
-                        <div id="missing-skills-container" class="flex flex-wrap gap-2 max-h-52 overflow-y-auto pr-1">
-                            <!-- Chips loaded via JS textContent DOM construction -->
+                    <!-- ATS Score Breakdown & Deductions -->
+                    <div class="pt-4 border-t border-slate-100 space-y-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">ATS Score Breakdown & Criteria Deductions</h4>
+                        <div id="ats-breakdown-container" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                            <!-- Populated via JS textContent DOM construction -->
                         </div>
                     </div>
                 </div>
             </div>
 
+
             <!-- Detected Sections and Contact Info Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 <!-- Contacts Panel -->
                 <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
                     <h3 class="text-base font-bold text-slate-900">Extracted Contact Information</h3>

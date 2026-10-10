@@ -116,8 +116,10 @@ class Analysis(db.Model):
             "resume_score_band": res_score_band,
             "ats_score": self.ats_score,
             "ats_score_band": ats_score_band,
+            "ats_details": self.matched_missing_json.get("ats_details", {}) if isinstance(self.matched_missing_json, dict) else {},
             "breakdown": self.breakdown_json,
             "matched_missing": self.matched_missing_json,
+
             "suggestions": self.suggestions_json,
             "detected_sections": self.resume.sections_json if self.resume else {},
             "page_count": self.resume.page_count if self.resume else 1,
