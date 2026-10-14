@@ -109,9 +109,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const maxSizeBytes = 16 * 1024 * 1024; // 16 MB
+        const maxUploadMb = parseInt(document.querySelector('meta[name="max-upload-mb"]')?.content, 10) || 16;
+        const maxSizeBytes = maxUploadMb * 1024 * 1024;
         if (file.size > maxSizeBytes) {
-            showError('PAYLOAD_TOO_LARGE', 'File size exceeds the 16 MB limit. Please select a smaller file.');
+            showError('PAYLOAD_TOO_LARGE', 'File size exceeds the ' + maxUploadMb + ' MB limit. Please select a smaller file.');
             resetFileSelection();
             return;
         }
