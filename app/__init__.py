@@ -12,6 +12,12 @@ def create_app(config_class: type = DevelopmentConfig) -> Flask:
     app = Flask(__name__, template_folder="../templates", static_folder="../static")
     app.config.from_object(config_class)
 
+    # Respect the reverse proxy in front of us (Render) so client IPs and the
+    # https scheme are read correctly. Required for accurate per-IP rate limiting.
+    from werkzeug.middleware.proxy_fix import ProxyFix
+
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
     # Hardened session cookie defaults (used for anonymous per-visitor ownership)
     app.config.setdefault("SESSION_COOKIE_HTTPONLY", True)
     app.config.setdefault("SESSION_COOKIE_SAMESITE", "Lax")
@@ -30,6 +36,16 @@ def create_app(config_class: type = DevelopmentConfig) -> Flask:
 
     # Initialize extensions
     db.init_app(app)
+
+    # Optional rate limiting. Guarded so a missing/broken dependency can never
+    # prevent the app from booting - degraded, but still serving.
+    from app.extensions import limiter
+
+    if limiter is not None:
+        limiter.init_app(app)
+        app.logger.info("Rate limiting enabled (in-memory storage).")
+    else:
+        app.logger.warning("Flask-Limiter unavailable; rate limiting is disabled.")
 
     with app.app_context():
         # Auto-create tables on every cold start (safe if tables already exist)
@@ -61,7 +77,7 @@ def create_app(config_class: type = DevelopmentConfig) -> Flask:
     @app.route("/health", methods=["GET"])
     def health():
         return jsonify(
-            {"status": "ok", "service": "smart-resume-analyzer", "version": "1.0.0"}
+            {"status": "ok", "service": "smart-resume-analyzer"}
         ), 200
 
     # Security headers on every response
@@ -70,6 +86,13 @@ def create_app(config_class: type = DevelopmentConfig) -> Flask:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        # HSTS is ignored by browsers over plain HTTP and only takes effect on HTTPS.
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains"
+        )
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), microphone=(), camera=()"
+        )
         return response
 
     register_error_handlers(app)
@@ -195,6 +218,17 @@ def register_error_handlers(app: Flask) -> None:
                 }
             }
         ), 415
+
+    @app.errorhandler(429)
+    def rate_limit_error(error):
+        return jsonify(
+            {
+                "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Too many requests. Please slow down and try again shortly.",
+                }
+            }
+        ), 429
 
     @app.errorhandler(500)
     def internal_server_error(error):
