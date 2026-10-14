@@ -1,6 +1,6 @@
 import json
 
-from flask import current_app, jsonify, request
+from flask import current_app, jsonify, request, session
 
 from app.routes import api_bp
 
@@ -71,8 +71,11 @@ def upload_resume():
     # 2. Compute SHA-256 hash for deduplication
     file_hash = compute_file_hash(raw_bytes)
 
-    # Check existing resume record in DB (deduplication)
-    existing_resume = Resume.query.filter_by(file_hash=file_hash).first()
+    # Check existing resume record in DB (deduplication, scoped to this visitor)
+    owner_token = session.get("owner_token")
+    existing_resume = Resume.query.filter_by(
+        file_hash=file_hash, owner_token=owner_token
+    ).first()
     if existing_resume:
         current_app.logger.info(f"Reusing existing resume record id={existing_resume.id} for hash={file_hash}")
         return jsonify(existing_resume.to_dict(include_text=True)), 200
@@ -98,6 +101,7 @@ def upload_resume():
         # 5. Save Resume to Database
         resume = Resume(
             filename=safe_name,
+            owner_token=session.get("owner_token"),
             extracted_text=parsed_data["raw_text"],
             file_hash=file_hash,
             page_count=parsed_data["page_count"],
@@ -331,7 +335,7 @@ def evaluate_ats():
     }), 200
 
 # ---------------------------------------------------------------------------
-# Analyze endpoint – unified scoring + ATS + feedback pipeline
+# Analyze endpoint â unified scoring + ATS + feedback pipeline
 # ---------------------------------------------------------------------------
 
 @api_bp.route("/api/analyze", methods=["POST"])
@@ -345,8 +349,8 @@ def analyze_resume():
 
     Request body (JSON):
         resume_id   (int, required)
-        role_id     (str, optional) – mutually exclusive with job_description
-        job_description (str, optional) – mutually exclusive with role_id
+        role_id     (str, optional) â mutually exclusive with job_description
+        job_description (str, optional) â mutually exclusive with role_id
     """
     from app.models import Analysis, Resume, db
     from app.services.ats import analyze_ats_compatibility
@@ -402,6 +406,15 @@ def analyze_resume():
     # --- Resume existence check ---
     resume = db.session.get(Resume, resume_id)
     if not resume:
+        return jsonify({
+            "error": {
+                "code": "NOT_FOUND",
+                "message": f"Resume with ID {resume_id} not found."
+            }
+        }), 404
+
+    # Ownership check: a visitor may only analyze a resume they uploaded.
+    if resume.owner_token and resume.owner_token != session.get("owner_token"):
         return jsonify({
             "error": {
                 "code": "NOT_FOUND",
@@ -590,8 +603,17 @@ def get_analysis(identifier: str):
     from app.models import Analysis, db
 
     analysis = None
+
+    # Numeric primary-key IDs are only resolvable by the owning session.
+    # Share tokens remain the sole public access path (they are unguessable).
     if identifier.isdigit():
-        analysis = db.session.get(Analysis, int(identifier))
+        candidate = db.session.get(Analysis, int(identifier))
+        if (
+            candidate
+            and candidate.resume
+            and candidate.resume.owner_token == session.get("owner_token")
+        ):
+            analysis = candidate
 
     if not analysis:
         analysis = Analysis.query.filter_by(share_token=identifier).first()
@@ -612,14 +634,14 @@ def get_analysis_history():
     """
     GET /api/history
 
-    Returns a paginated list of recent analyses, newest first.
-    Note: Omits sensitive contact details from history items.
+    Returns a paginated list of the current session's analyses, newest first.
+    Results are scoped to the visitor who created them. Omits sensitive contact details.
 
     Query parameters:
         page     (int, default 1)
         per_page (int, default 10, max 50)
     """
-    from app.models import Analysis, db
+    from app.models import Analysis, Resume, db
 
     try:
         page = max(1, int(request.args.get("page", 1)))
@@ -631,8 +653,11 @@ def get_analysis_history():
     except (ValueError, TypeError):
         per_page = 10
 
+    owner_token = session.get("owner_token")
     pagination = (
         db.session.query(Analysis)
+        .join(Resume, Analysis.resume_id == Resume.id)
+        .filter(Resume.owner_token == owner_token)
         .order_by(Analysis.created_at.desc())
         .paginate(page=page, per_page=per_page, error_out=False)
     )
