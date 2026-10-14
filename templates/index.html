@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="max-upload-mb" content="{{ max_upload_mb|default(5) }}">
     <title>Smart Resume Analyzer | AI Capstone</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -139,7 +140,7 @@
                                     <span class="text-blue-600 hover:underline">Click to browse</span> or drag and drop
                                     your file here
                                 </p>
-                                <p class="text-xs text-slate-500 mt-1">Supports PDF or DOCX (Max 16 MB)</p>
+                                <p class="text-xs text-slate-500 mt-1">Supports PDF or DOCX (Max {{ max_upload_mb|default(5) }} MB)</p>
                             </div>
                         </div>
 
