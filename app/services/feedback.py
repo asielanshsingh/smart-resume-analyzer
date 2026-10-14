@@ -134,7 +134,6 @@ def _evaluate_condition(
 
     if ctype == "section_missing":
         section = condition.get("section", "")
-        detected = scoring_result.get("breakdown", {})
         sections_data = {}
         # Detected sections are implicit in the scoring breakdown:
         # a section "scores" > 0 or has content if its score > 0, but we
@@ -295,9 +294,8 @@ def generate_suggestions(
         if not rule_id:
             continue
         condition = rule.get("condition", {})
-        if _evaluate_condition(condition, scoring_result, ats_result):
-            if rule_id not in triggered:
-                triggered[rule_id] = rule
+        if _evaluate_condition(condition, scoring_result, ats_result) and rule_id not in triggered:
+            triggered[rule_id] = rule
 
     positive_rule = triggered.pop(POSITIVE_ID, None)
 
