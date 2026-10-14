@@ -30,7 +30,7 @@ def safe_clamp_score(val: Any, min_val: int = 0, max_val: int = 100) -> int:
         if val is None or math.isnan(float(val)):
             return min_val
         num = float(val)
-        return max(min_val, min(max_val, int(round(num))))
+        return max(min_val, min(max_val, round(num)))
     except Exception:
         return min_val
 
@@ -49,13 +49,13 @@ def evaluate_structure(parsed_data: dict[str, Any], config: dict[str, Any]) -> d
     found_essential = [sec for sec in essential_secs if sections.get(sec, "").strip()]
     essential_pts = len(found_essential) * (12.0 / max(1, len(essential_secs)))
     score += essential_pts
-    reasons.append(f"Essential sections present ({len(found_essential)}/{len(essential_secs)}: {', '.join(found_essential) if found_essential else 'none'}): +{int(round(essential_pts))}/{12}")
+    reasons.append(f"Essential sections present ({len(found_essential)}/{len(essential_secs)}: {', '.join(found_essential) if found_essential else 'none'}): +{round(essential_pts)}/{12}")
 
     # 2. Recommended Sections Check (6 pts max)
     found_recommended = [sec for sec in recommended_secs if sections.get(sec, "").strip()]
     rec_pts = min(6.0, len(found_recommended) * 1.5)
     score += rec_pts
-    reasons.append(f"Recommended sections present ({len(found_recommended)}/{len(recommended_secs)}): +{int(round(rec_pts))}/6")
+    reasons.append(f"Recommended sections present ({len(found_recommended)}/{len(recommended_secs)}): +{round(rec_pts)}/6")
 
     # 3. Logical Order & Heading Quality (2 pts max)
     raw_text = parsed_data.get("raw_text", "").lower()
@@ -291,7 +291,7 @@ def evaluate_experience(parsed_data: dict[str, Any], config: dict[str, Any]) -> 
 
             if sub_total > 0:
                 reasons.append(
-                    f"Fresher evaluation active: Practical project depth (+{int(round(proj_sub))}) and certifications (+{int(round(cert_sub))}) evaluated as experience substitutes: +{int(round(sub_total))}/{max_pts}"
+                    f"Fresher evaluation active: Practical project depth (+{round(proj_sub)}) and certifications (+{round(cert_sub)}) evaluated as experience substitutes: +{round(sub_total)}/{max_pts}"
                 )
             else:
                 reasons.append("No work experience, projects, or certifications detected: +0/10")
