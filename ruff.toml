@@ -36,6 +36,9 @@ ignore = [
 # Tests may retain imports for documentation; test-fixture strings are deliberately long
 "tests/*" = ["F401", "E741", "E501"]
 # Scoring module uses single-letter variable 'l' for line-level metrics
-"app/services/scoring.py" = ["E741"]
+"app/services/scoring.py" = ["E741", "E501"]
 # Models have long JSON column type strings
 "app/models.py" = ["E501"]
+# Data-dense modules carry long descriptive string literals
+"app/services/parser.py" = ["E501"]
+"app/services/ats.py" = ["E501"]
