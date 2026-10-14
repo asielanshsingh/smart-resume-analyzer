@@ -85,7 +85,7 @@ def upload_resume():
         file_hash=file_hash, owner_token=owner_token
     ).first()
     if existing_resume:
-        current_app.logger.info(f"Reusing existing resume record id={existing_resume.id} for hash={file_hash}")
+        current_app.logger.info("Reusing existing resume record id=%s for hash=%s", existing_resume.id, file_hash)
         return jsonify(existing_resume.to_dict(include_text=True)), 200
 
     # 3. Store temporary file safely for parsing and delete immediately afterwards
@@ -131,7 +131,7 @@ def upload_resume():
                 "message": e.message
             }
         }), e.status_code
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         current_app.logger.exception("Error parsing resume upload")
         return jsonify({
@@ -146,7 +146,7 @@ def upload_resume():
             try:
                 temp_file_path.unlink()
             except Exception as e:
-                current_app.logger.warning(f"Could not delete temp file {temp_file_path}: {e}")
+                current_app.logger.warning("Could not delete temp file %s: %s", temp_file_path, e)
 
 
 @api_bp.route("/api/resumes/<int:resume_id>", methods=["GET"])
@@ -295,7 +295,7 @@ def evaluate_ats():
                     }
                 }), 400
         except Exception as e:
-            current_app.logger.error(f"Failed to read roles file: {e}")
+            current_app.logger.error("Failed to read roles file: %s", e)
             return jsonify({
                 "error": {
                     "code": "INTERNAL_SERVER_ERROR",
@@ -469,7 +469,7 @@ def analyze_resume():
                     }
                 }), 400
         except Exception as e:
-            current_app.logger.error(f"Failed to read roles file: {e}")
+            current_app.logger.error("Failed to read roles file: %s", e)
             return jsonify({
                 "error": {
                     "code": "INTERNAL_SERVER_ERROR",
