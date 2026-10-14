@@ -39,6 +39,9 @@ ignore = [
 "app/services/scoring.py" = ["E741", "E501"]
 # Models have long JSON column type strings
 "app/models.py" = ["E501"]
+# Flask's @app.errorhandler(500) runs inside an exception context, so
+# logger.exception() is correct there even though ruff cannot see it (LOG004/LOG014)
+"app/__init__.py" = ["LOG004", "LOG014"]
 # Data-dense modules carry long descriptive string literals
 "app/services/parser.py" = ["E501"]
 "app/services/ats.py" = ["E501"]
