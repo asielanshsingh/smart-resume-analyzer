@@ -13,6 +13,9 @@ import pytest
 
 from app.models import Analysis, Resume, db
 
+# Fixed owner token so seeded rows belong to the test client's session.
+_TEST_OWNER = "test-owner-token"
+
 # ---------------------------------------------------------------------------
 # Fixture helpers – minimal in-memory PDF/DOCX bytes
 # ---------------------------------------------------------------------------
@@ -35,11 +38,11 @@ endstream
 endobj
 xref
 0 5
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000274 00000 n 
+0000000000 65535 f
+0000000009 00000 n
+0000000058 00000 n
+0000000115 00000 n
+0000000274 00000 n
 trailer<</Size 5/Root 1 0 R>>
 startxref
 369
@@ -81,11 +84,14 @@ def rich_resume_text():
 
 
 @pytest.fixture
-def seeded_resume(app, rich_resume_text):
-    """Insert a well-formed Resume row and return it."""
+def seeded_resume(client, app, rich_resume_text):
+    """Insert a well-formed Resume row owned by the test client's session."""
+    with client.session_transaction() as sess:
+        sess["owner_token"] = _TEST_OWNER
     with app.app_context():
         resume = Resume(
             filename="test_resume.pdf",
+            owner_token=_TEST_OWNER,
             extracted_text=rich_resume_text,
             file_hash="aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899",
             page_count=1,
@@ -213,8 +219,11 @@ class TestFullCycle:
             "• Designed REST API handling 1000+ req/s.\n"
             "Certifications\nAWS Cloud Practitioner 2024\n"
         )
+        with client.session_transaction() as sess:
+            sess["owner_token"] = _TEST_OWNER
         resume = Resume(
             filename="jane.pdf",
+            owner_token=_TEST_OWNER,
             extracted_text=rich_text,
             file_hash="jane1234" * 8,
             page_count=1,
