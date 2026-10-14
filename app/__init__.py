@@ -129,7 +129,7 @@ def _migrate_share_token(app: Flask) -> None:
         from app.models import Analysis
 
         legacy_rows = Analysis.query.filter(
-            (Analysis.share_token == None) | (Analysis.share_token == "")
+            (Analysis.share_token.is_(None)) | (Analysis.share_token == "")
         ).all()
         for row in legacy_rows:
             row.share_token = secrets.token_urlsafe(16)
