@@ -1,4 +1,4 @@
-from flask import Response, render_template
+from flask import Response, current_app, render_template
 
 from app.routes import main_bp
 
@@ -6,7 +6,10 @@ from app.routes import main_bp
 @main_bp.route("/")
 def index():
     """Render resume upload & role selection page."""
-    return render_template("index.html")
+    return render_template(
+        "index.html",
+        max_upload_mb=current_app.config.get("MAX_UPLOAD_MB", 5),
+    )
 
 @main_bp.route("/dashboard")
 def dashboard():
