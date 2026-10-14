@@ -2,7 +2,15 @@ import json
 
 from flask import current_app, jsonify, request, session
 
+from app.extensions import limiter
 from app.routes import api_bp
+
+
+def _rate_limit(spec: str):
+    """Apply a rate limit when Flask-Limiter is available; otherwise a no-op."""
+    if limiter is None:
+        return lambda fn: fn
+    return limiter.limit(spec)
 
 
 @api_bp.route("/health", methods=["GET"])
@@ -10,8 +18,7 @@ def health_check():
     """Health check endpoint."""
     return jsonify({
         "status": "ok",
-        "service": "smart-resume-analyzer",
-        "version": "1.0.0"
+        "service": "smart-resume-analyzer"
     }), 200
 
 @api_bp.route("/api/roles", methods=["GET"])
@@ -32,6 +39,7 @@ def get_roles():
         }), 500
 
 @api_bp.route("/api/upload", methods=["POST"])
+@_rate_limit("10 per minute;100 per hour")
 def upload_resume():
     """Endpoint to validate, parse, and store uploaded resume (PDF or DOCX)."""
     from pathlib import Path
@@ -129,7 +137,7 @@ def upload_resume():
         return jsonify({
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
-                "message": f"An unexpected error occurred while processing the resume: {e!s}"
+                "message": "An unexpected error occurred while processing the resume."
             }
         }), 500
     finally:
@@ -157,6 +165,7 @@ def get_resume(resume_id: int):
 
 
 @api_bp.route("/api/score", methods=["POST"])
+@_rate_limit("30 per minute;300 per hour")
 def score_resume():
     """Calculates deterministic resume score (out of 100) and category breakdown."""
     from app.models import Resume, db
@@ -194,6 +203,7 @@ def score_resume():
 
 
 @api_bp.route("/api/ats", methods=["POST"])
+@_rate_limit("30 per minute;300 per hour")
 def evaluate_ats():
     """Evaluates ATS keyword matching and compatibility score for a resume against a target role or job description."""
     from app.models import Resume, db
@@ -339,6 +349,7 @@ def evaluate_ats():
 # ---------------------------------------------------------------------------
 
 @api_bp.route("/api/analyze", methods=["POST"])
+@_rate_limit("20 per minute;200 per hour")
 def analyze_resume():
     """
     POST /api/analyze
@@ -593,6 +604,7 @@ def analyze_resume():
 # ---------------------------------------------------------------------------
 
 @api_bp.route("/api/analysis/<identifier>", methods=["GET"])
+@_rate_limit("60 per minute")
 def get_analysis(identifier: str):
     """
     GET /api/analysis/<identifier>
@@ -630,6 +642,7 @@ def get_analysis(identifier: str):
 
 
 @api_bp.route("/api/history", methods=["GET"])
+@_rate_limit("60 per minute")
 def get_analysis_history():
     """
     GET /api/history
