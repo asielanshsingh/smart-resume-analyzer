@@ -58,6 +58,7 @@ class Resume(db.Model):
     upload_time = db.Column(db.DateTime, default=lambda: datetime.now(UTC), nullable=False)
     extracted_text = db.Column(db.Text, nullable=True)
     file_hash = db.Column(db.String(64), index=True, nullable=False)
+    owner_token = db.Column(db.String(64), index=True, nullable=True)
     page_count = db.Column(db.Integer, default=1, nullable=False)
     word_count = db.Column(db.Integer, default=0, nullable=False)
     sections_json = db.Column(db.JSON, nullable=True)
