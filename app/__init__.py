@@ -1,7 +1,7 @@
 import logging
 import os
 
-from flask import Flask, jsonify, session
+from flask import Flask, jsonify, request, session
 
 from app.config import DevelopmentConfig
 from app.models import db
@@ -93,6 +93,10 @@ def create_app(config_class: type = DevelopmentConfig) -> Flask:
         response.headers["Permissions-Policy"] = (
             "geolocation=(), microphone=(), camera=()"
         )
+        # Never let browsers or intermediary caches store API payloads, which
+        # can contain personal resume data.
+        if request.path.startswith("/api/"):
+            response.headers["Cache-Control"] = "no-store"
         return response
 
     register_error_handlers(app)
