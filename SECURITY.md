@@ -30,51 +30,68 @@ ownership. Schema migration `_migrate_owner_token` adds the column on deploy.
 ## DONE - Round 2: abuse control + disclosure + headers
 
 ### [HIGH] No rate limiting
-Fixed: `Flask-Limiter` (in-memory) applied to `/api/upload`, `/api/analyze`,
-`/api/analysis/*`, `/api/history`, `/api/score`, `/api/ats`. `ProxyFix` added so
-limits key off the real client IP (not Render's proxy IP). Limiter is imported
-defensively via `app/extensions.py` - if the dependency is ever missing the app
-still boots. Throttling is disabled under `TestingConfig`.
+Fixed: `Flask-Limiter` (in-memory) applied to the API routes. `ProxyFix` added so
+limits key off the real client IP. Imported defensively via `app/extensions.py`;
+disabled under `TestingConfig`.
 
 ### [MEDIUM] Upload error message leaked internals
-Fixed: `/api/upload` no longer returns `f"...: {e!s}"` to the client; details
-stay in the server log.
+Fixed: `/api/upload` no longer returns exception text to the client.
 
 ### [LOW] /health disclosed version
-Fixed: `/health` and `/api/health` now return `status` + `service` only (no
-`version`). Kept `service` because `tests/test_health.py` asserts on it.
+Fixed: returns `status` + `service` only.
 
 ### [LOW] Missing transport/permission headers
-Fixed: added `Strict-Transport-Security` and `Permissions-Policy` on top of the
-existing `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`.
+Fixed: added `Strict-Transport-Security` and `Permissions-Policy`.
+
+---
+
+## DONE - Round 3: low-risk quick wins (additive only)
+
+### [MEDIUM] File-type validation - ALREADY IMPLEMENTED (verified)
+`app/services/parser.py::validate_file_content` already enforces extension
+allow-list, size cap, and magic-byte checks (`%PDF` for pdf, `PK\x03\x04` for
+docx), raising `MismatchedFileTypeError` on mismatch. No change needed - the
+original finding was a false alarm.
+
+### [MEDIUM] CORS - VERIFIED SAFE (no change needed)
+No CORS library is installed and no `Access-Control-Allow-*` headers are set, so
+the browser enforces same-origin by default. No wildcard origin exists.
+
+### [LOW] API responses could be cached
+Fixed: `Cache-Control: no-store` is now set on `/api/*` responses so browsers and
+intermediary caches never retain personal resume data.
+
+### [LOW] No crawler policy / security contact
+Fixed: `/robots.txt` (disallows /api/, /dashboard, /result/) and
+`/.well-known/security.txt` (RFC 9116 contact) are now served.
+
+### [LOW] Dependency hygiene
+Added `.github/workflows/security.yml` (pip-audit report + ruff + pytest) and
+`.github/dependabot.yml` (weekly pip + actions updates).
 
 ---
 
 ## TODO - remaining problems, in priority order
 
 ### HIGH
-1. Session-cookie scoping is NOT authentication. For anything long-lived,
-   add real accounts (login + hashed passwords) and move `owner_token` to a
+1. Session-cookie scoping is NOT authentication. For anything long-lived, add
+   real accounts (login + hashed passwords) and move `owner_token` to a
    `user_id` foreign key.
 
 ### MEDIUM
 2. DB on `sqlite:////tmp/app.db` resets on every deploy and is single-instance.
    Move to managed Postgres before real traffic.
-3. CORS: confirm no permissive `Access-Control-Allow-Origin: *` on API routes.
-4. File-type validation: verify magic bytes (not just extension) for PDF/DOCX
-   before parsing; keep server-side `MAX_CONTENT_LENGTH` enforced.
 
 ### LOW
-5. Content-Security-Policy: DELIBERATELY DEFERRED. The templates load Tailwind
-   via the Play CDN (`cdn.tailwindcss.com`) which needs inline/eval scripts, so a
-   strict CSP would break the UI. To enable CSP safely, first self-host the CSS
-   (drop the CDN), then add a nonce-based policy.
-6. robots.txt / security.txt.
-7. CSRF protection once any authenticated state exists.
-8. Dependency hygiene: pin versions and run `pip-audit` in CI.
+3. Content-Security-Policy: DELIBERATELY DEFERRED. Templates load Tailwind via
+   the Play CDN (`cdn.tailwindcss.com`) which needs inline/eval scripts, so a
+   strict CSP would break the UI. Self-host the CSS first, then add a
+   nonce-based policy.
+4. CSRF protection once any authenticated state exists.
 
 ### VERIFY AFTER EACH FIX
-- `curl -s https://<app>/api/history` in a fresh (no-cookie) client -> empty list.
+- `curl -s https://<app>/api/history` in a fresh client -> empty list.
 - `curl -s https://<app>/api/analysis/1` in a fresh client -> 404.
-- `curl -I https://<app>/` -> HSTS + Permissions-Policy present.
+- `curl -I https://<app>/api/roles` -> contains `Cache-Control: no-store`.
+- `curl -s https://<app>/robots.txt` and `/.well-known/security.txt` -> 200 text.
 - Hammer `/api/upload` > 10x/min -> 429 with `RATE_LIMITED` JSON.
