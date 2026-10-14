@@ -80,10 +80,9 @@ def validate_file_content(filename: str, raw_bytes: bytes, max_upload_mb: int = 
     if ext == "pdf":
         if not raw_bytes.startswith(b"%PDF"):
             raise MismatchedFileTypeError("File extension is .pdf but magic bytes do not match PDF format.")
-    elif ext == "docx":
+    elif ext == "docx" and not raw_bytes.startswith(b"PK\x03\x04"):
         # PK Zip header for docx
-        if not raw_bytes.startswith(b"PK\x03\x04"):
-            raise MismatchedFileTypeError("File extension is .docx but magic bytes do not match DOCX package format.")
+        raise MismatchedFileTypeError("File extension is .docx but magic bytes do not match DOCX package format.")
 
     return ext
 
@@ -139,9 +138,8 @@ def extract_contacts(text: str) -> dict[str, list[str]]:
     for p in raw_phones:
         cleaned_p = p.strip()
         digits = re.sub(r'\D', '', cleaned_p)
-        if 10 <= len(digits) <= 15:
-            if cleaned_p not in valid_phones:
-                valid_phones.append(cleaned_p)
+        if 10 <= len(digits) <= 15 and cleaned_p not in valid_phones:
+            valid_phones.append(cleaned_p)
     contacts["phones"] = valid_phones
 
     # LinkedIn extraction
@@ -250,7 +248,7 @@ def parse_pdf(raw_bytes: bytes) -> tuple[str, int, list[str]]:
                 words = page.extract_words()
                 if len(words) > 10:
                     x0_vals = [w["x0"] for w in words]
-                    min_x, max_x = min(x0_vals), max(x0_vals)
+                    _min_x, _max_x = min(x0_vals), max(x0_vals)
                     page_width = page.width or 600
                     # If text spans across distinct left and right columns
                     left_col = [w for w in words if w["x0"] < page_width * 0.45]
