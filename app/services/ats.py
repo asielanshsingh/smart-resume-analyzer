@@ -122,7 +122,7 @@ def match_skills_in_text(
             if not matched_term:
                 matched_term = term
 
-    return is_matched, matched_term, sorted(list(sections_found))
+    return is_matched, matched_term, sorted(sections_found)
 
 
 def extract_skills_from_jd(
@@ -161,7 +161,7 @@ def extract_skills_from_jd(
     if not matched_skills:
         return {"required_skills": [], "preferred_skills": [], "skill_aliases": {}}
 
-    sorted_matched = sorted(list(matched_skills))
+    sorted_matched = sorted(matched_skills)
 
     # Split skills into required (first ~65%) and preferred (remaining)
     split_idx = max(1, int(len(sorted_matched) * 0.65))
@@ -224,7 +224,6 @@ def calculate_ats_compatibility_score(
         deductions.append(f"Missing essential section(s): {', '.join(missing_essential)} (-{lost:.1f} points).")
 
     # 3. Parseable Contact Info (Max 15)
-    contact_weight = weights.get("contact_info", 15)
     contacts = parsed_resume.get("contacts") or parsed_resume.get("contacts_json") or {}
     email = contacts.get("email") or (contacts.get("emails")[0] if isinstance(contacts.get("emails"), list) and contacts.get("emails") else None)
     phone = contacts.get("phone") or (contacts.get("phones")[0] if isinstance(contacts.get("phones"), list) and contacts.get("phones") else None)
