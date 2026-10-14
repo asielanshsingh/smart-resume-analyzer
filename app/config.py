@@ -47,6 +47,8 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     DEBUG = True
+    # Disable throttling in tests so they never trip rate limits.
+    RATELIMIT_ENABLED = False
 
 
 class ProductionConfig(Config):
