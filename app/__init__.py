@@ -1,7 +1,7 @@
 import logging
 import os
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, session
 
 from app.config import DevelopmentConfig
 from app.models import db
@@ -11,6 +11,11 @@ def create_app(config_class: type = DevelopmentConfig) -> Flask:
     """Application factory for the Smart Resume Analyzer."""
     app = Flask(__name__, template_folder="../templates", static_folder="../static")
     app.config.from_object(config_class)
+
+    # Hardened session cookie defaults (used for anonymous per-visitor ownership)
+    app.config.setdefault("SESSION_COOKIE_HTTPONLY", True)
+    app.config.setdefault("SESSION_COOKIE_SAMESITE", "Lax")
+    app.config.setdefault("SESSION_COOKIE_SECURE", not app.config.get("DEBUG", False))
 
     # Configure structured logging
     logging.basicConfig(
@@ -32,6 +37,19 @@ def create_app(config_class: type = DevelopmentConfig) -> Flask:
 
         # Schema migration: add share_token column to legacy databases
         _migrate_share_token(app)
+
+        # Schema migration: add owner_token column (per-visitor scoping)
+        _migrate_owner_token(app)
+
+    # Assign a stable anonymous owner token to each browser session so that
+    # stored resumes/analyses can be scoped to the visitor who created them.
+    from uuid import uuid4
+
+    @app.before_request
+    def _assign_owner_identity():
+        if "owner_token" not in session:
+            session["owner_token"] = uuid4().hex
+        session.permanent = True
 
     # Register blueprints
     from app.routes import api_bp, main_bp
@@ -89,6 +107,31 @@ def _migrate_share_token(app: Flask) -> None:
         for row in legacy_rows:
             row.share_token = secrets.token_urlsafe(16)
         db.session.commit()
+    except Exception as migration_err:
+        app.logger.warning("Database schema migration warning: %s", migration_err)
+
+
+def _migrate_owner_token(app: Flask) -> None:
+    """Add owner_token column to resumes table if it is missing (one-time migration)."""
+    try:
+        from sqlalchemy import inspect, text
+
+        inspector = inspect(db.engine)
+        if "resumes" not in inspector.get_table_names():
+            return
+
+        columns = [c["name"] for c in inspector.get_columns("resumes")]
+        if "owner_token" in columns:
+            return
+
+        app.logger.info(
+            "Migrating database: adding owner_token column to resumes table..."
+        )
+        with db.engine.begin() as conn:
+            conn.execute(text("ALTER TABLE resumes ADD COLUMN owner_token VARCHAR(64)"))
+            conn.execute(
+                text("CREATE INDEX IF NOT EXISTS ix_resumes_owner_token ON resumes (owner_token)")
+            )
     except Exception as migration_err:
         app.logger.warning("Database schema migration warning: %s", migration_err)
 
