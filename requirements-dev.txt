@@ -1,3 +1,4 @@
 # Development-only dependencies (not installed on Render)
 pytest>=8.0.0
 ruff==0.17.0
+reportlab>=4.0.0
